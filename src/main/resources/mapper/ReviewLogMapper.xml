@@ -42,4 +42,17 @@
         )
     </insert>
 
+    <!-- 查询指定日期范围内的每日统计数据 -->
+    <select id="selectDailyStats" resultType="com.example.memoryassistant.dto.DailyStats">
+        SELECT 
+            DATE(review_date) as date,
+            COUNT(*) as reviewCount,
+            SUM(is_correct) as correctCount
+        FROM review_log
+        WHERE user_id = #{userId}
+          AND DATE(review_date) BETWEEN #{startDate} AND #{endDate}
+        GROUP BY DATE(review_date)
+        ORDER BY date ASC
+    </select>
+
 </mapper>

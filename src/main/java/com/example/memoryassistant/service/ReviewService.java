@@ -1,5 +1,6 @@
 package com.example.memoryassistant.service;
 
+import com.example.memoryassistant.dto.DailyStats;
 import com.example.memoryassistant.entity.Flashcard;
 import com.example.memoryassistant.entity.ReviewLog;
 import com.example.memoryassistant.mapper.FlashcardMapper;
@@ -10,7 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 复习服务 - 核心业务逻辑
@@ -160,5 +164,53 @@ public class ReviewService {
      */
     public List<ReviewLog> getReviewHistory(Long cardId) {
         return reviewLogMapper.selectByCardId(cardId);
+    }
+
+    /**
+     * 获取近 7 天的学习统计数据
+     * @param userId 用户ID
+     * @return 统计数据，包含日期、复习数量、正确率
+     */
+    public Map<String, Object> getLast7DaysStats(Long userId) {
+        // 获取当前日期
+        LocalDate today = LocalDate.now();
+        LocalDate startDate = today.minusDays(6); // 过6天前到今天，共7天
+        
+        // 从数据库查询实际数据
+        List<DailyStats> dbStats = reviewLogMapper.selectDailyStats(userId, startDate, today);
+        
+        // 将数据库数据转换为 Map，以日期为 key
+        Map<LocalDate, DailyStats> statsMap = new HashMap<>();
+        for (DailyStats stat : dbStats) {
+            statsMap.put(stat.getDate(), stat);
+        }
+        
+        // 生成完整的7天数据（填充空白日期）
+        List<String> dates = new ArrayList<>();
+        List<Integer> reviewCounts = new ArrayList<>();
+        List<Double> correctRates = new ArrayList<>();
+        
+        for (int i = 6; i >= 0; i--) {
+            LocalDate date = today.minusDays(i);
+            dates.add(String.format("%02d-%02d", date.getMonthValue(), date.getDayOfMonth()));
+            
+            // 如果该天有数据，使用实际数据；否则填充 0
+            if (statsMap.containsKey(date)) {
+                DailyStats stat = statsMap.get(date);
+                reviewCounts.add(stat.getReviewCount());
+                correctRates.add(stat.getCorrectRate());
+            } else {
+                reviewCounts.add(0);
+                correctRates.add(0.0);
+            }
+        }
+        
+        // 返回结果
+        Map<String, Object> result = new HashMap<>();
+        result.put("dates", dates);
+        result.put("reviewCounts", reviewCounts);
+        result.put("correctRates", correctRates);
+        
+        return result;
     }
 }

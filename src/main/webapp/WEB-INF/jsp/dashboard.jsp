@@ -83,6 +83,16 @@
             </div>
         </div>
 
+        <!-- 近7天学习统计图表 -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">📈 近 7 天学习情况</h5>
+            </div>
+            <div class="card-body">
+                <div id="weeklyChart" style="width: 100%; height: 350px;"></div>
+            </div>
+        </div>
+
         <!-- 今日待复习卡片列表 -->
         <c:if test="${not empty dueCards}">
             <div class="card shadow-sm mb-4">
@@ -238,6 +248,8 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- ECharts 图表库 -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <script>
         let selectDeckModal;
         
@@ -260,6 +272,129 @@
                 checkbox.checked = !allChecked;
             });
         }
+
+        // 加载近7天学习统计图表
+        function loadWeeklyChart() {
+            // 初始化 ECharts 实例
+            const chartDom = document.getElementById('weeklyChart');
+            const myChart = echarts.init(chartDom);
+            
+            // 显示加载动画
+            myChart.showLoading();
+            
+            // 请求数据
+            fetch('${pageContext.request.contextPath}/api/stats/weekly')
+                .then(response => response.json())
+                .then(data => {
+                    myChart.hideLoading();
+                    
+                    if (!data.success) {
+                        console.error('获取数据失败:', data.message);
+                        return;
+                    }
+                    
+                    // 配置图表选项
+                    const option = {
+                        title: {
+                            text: '学习趋势分析',
+                            left: 'center',
+                            textStyle: {
+                                fontSize: 16,
+                                fontWeight: 'normal'
+                            }
+                        },
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: {
+                                type: 'cross',
+                                crossStyle: {
+                                    color: '#999'
+                                }
+                            }
+                        },
+                        legend: {
+                            data: ['复习数量', '正确率'],
+                            bottom: 10
+                        },
+                        grid: {
+                            left: '3%',
+                            right: '4%',
+                            bottom: '15%',
+                            containLabel: true
+                        },
+                        xAxis: [
+                            {
+                                type: 'category',
+                                data: data.dates,
+                                axisPointer: {
+                                    type: 'shadow'
+                                }
+                            }
+                        ],
+                        yAxis: [
+                            {
+                                type: 'value',
+                                name: '复习数量',
+                                min: 0,
+                                axisLabel: {
+                                    formatter: '{value}'
+                                }
+                            },
+                            {
+                                type: 'value',
+                                name: '正确率 (%)',
+                                min: 0,
+                                max: 100,
+                                axisLabel: {
+                                    formatter: '{value}%'
+                                }
+                            }
+                        ],
+                        series: [
+                            {
+                                name: '复习数量',
+                                type: 'bar',
+                                data: data.reviewCounts,
+                                itemStyle: {
+                                    color: '#667eea'
+                                },
+                                barWidth: '40%'
+                            },
+                            {
+                                name: '正确率',
+                                type: 'line',
+                                yAxisIndex: 1,
+                                data: data.correctRates,
+                                itemStyle: {
+                                    color: '#28a745'
+                                },
+                                lineStyle: {
+                                    width: 3
+                                },
+                                smooth: true
+                            }
+                        ]
+                    };
+                    
+                    // 设置图表选项
+                    myChart.setOption(option);
+                    
+                    // 窗口大小改变时自适应
+                    window.addEventListener('resize', function() {
+                        myChart.resize();
+                    });
+                })
+                .catch(error => {
+                    myChart.hideLoading();
+                    console.error('请求失败:', error);
+                });
+        }
+        
+        // 页面加载完成后加载图表
+        document.addEventListener('DOMContentLoaded', function() {
+            selectDeckModal = new bootstrap.Modal(document.getElementById('selectDeckModal'));
+            loadWeeklyChart();
+        });
     </script>
 </body>
 </html>
