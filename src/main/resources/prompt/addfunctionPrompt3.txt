@@ -1,0 +1,142 @@
+# Role
+你是一名精通 Java Spring Boot 3.x, MyBatis 和 JSP 的全栈开发专家。
+我正在开发 "Memory-X" 记忆卡片项目。
+
+# Context (项目背景)
+目前项目已经完成了卡组和卡片的增删改查。
+现有的复习逻辑是：系统自动查找当前用户**所有卡组**中今日到期的卡片进行复习。
+**我的新需求是**：用户可以在仪表盘 (Dashboard) 自行勾选想要复习的卡组（例如只复习 "Java基础" 和 "英语单词"），系统生成的今日复习任务**仅包含**这两个卡组中的到期卡片。
+
+# Database Schema (Existing)
+数据库表结构如下（请基于此开发，不要修改表结构）：
+[此处粘贴你提供的完整 SQL 脚本，或者告诉 AI 参考上下文]
+
+# Requirements (具体需求)
+请帮我修改前后端代码以实现“按卡组筛选复习”的功能：
+
+1.  **后端 - MyBatis Mapper**:
+    -   修改 `FlashcardMapper.xml` 和接口。
+    -   新增或修改查询方法 `selectDueCards`，使其支持传入一个 `List<Long> deckIds` 参数。
+    -   逻辑：如果 `deckIds` 为空或 null，查询所有到期卡片；如果 `deckIds` 有值，则只查询 `deck_id` 在列表中的到期卡片 (`WHERE deck_id IN (...)`).
+
+2.  **后端 - Service & Controller (Session 管理)**:
+    -   **PageController**:
+        -   新增一个 POST 接口 `/review/start`。
+        -   接收前端传来的 `List<Long> deckIds`。
+        -   **关键点**：将用户选择的 `deckIds` 存入 `HttpSession` (key 设为 "selectedDeckIds")，然后重定向到 `/review` 页面。
+    -   **ReviewService**:
+        -   修改 `getDueCards` 方法，增加 `List<Long> deckIds` 参数。
+    -   **CardController (AJAX 处理)**:
+        -   在 `submitReview` (提交复习反馈) 接口中，从 `HttpSession` 获取刚才存的 "selectedDeckIds"。
+        -   在获取“下一张卡片”时，必须将这个 ID 列表传给 Service，确保下一张卡片也是来自用户选定的卡组。
+
+3.  **前端 - Dashboard.jsp**:
+    -   将展示卡组的列表 (`<c:forEach>`) 包裹在一个 `<form action="/review/start" method="post">` 中。
+    -   在每个卡组卡片旁边（或左上角）增加一个 Checkbox 复选框 `name="deckIds" value="${deck.id}"`。
+    -   修改“开始复习”按钮，使其作为表单的 Submit 按钮。
+    -   (可选优化) 增加“全选/反选”的 JavaScript 逻辑。
+
+# Output Expected (你需要输出的内容)
+1.  **FlashcardMapper.xml** 的 `<select>` SQL 片段（使用 `<foreach>` 标签处理 List）。
+2.  **ReviewService.java** 的修改片段。
+3.  **PageController.java** 的 `startReview` 方法。
+4.  **CardController.java** 的 `submitReview` 修改片段（展示如何从 Session 取值并传给 Service）。
+5.  **dashboard.jsp** 的关键修改代码（Form 表单和 Checkbox 部分）。
+
+请确保代码风格与 Spring Boot 3.x 和 MyBatis 保持一致。
+
+我的数据库脚本如下：
+create table sys_user
+(
+    id          bigint auto_increment comment '用户ID'
+        primary key,
+    username    varchar(50)                        not null comment '用户名',
+    password    varchar(100)                       not null comment '密码',
+    email       varchar(100)                       null comment '邮箱',
+    nickname    varchar(50)                        null comment '昵称',
+    avatar_url  varchar(255)                       null comment '头像URL',
+    create_time datetime default CURRENT_TIMESTAMP null comment '创建时间',
+    update_time datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
+    status      tinyint  default 1                 null comment '状态: 0-禁用, 1-启用',
+    constraint username
+        unique (username)
+)
+    comment '用户表' charset = utf8mb4;
+
+create table flashcard_deck
+(
+    id          bigint auto_increment comment '卡组ID'
+        primary key,
+    user_id     bigint                             not null comment '所属用户ID',
+    deck_name   varchar(100)                       not null comment '卡组名称',
+    description text                               null comment '卡组描述',
+    category    varchar(50)                        null comment '卡组分类',
+    card_count  int      default 0                 null comment '卡片数量',
+    create_time datetime default CURRENT_TIMESTAMP null comment '创建时间',
+    update_time datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
+    status      tinyint  default 1                 null comment '状态: 0-删除, 1-正常',
+    constraint flashcard_deck_ibfk_1
+        foreign key (user_id) references sys_user (id)
+            on delete cascade
+)
+    comment '卡组表' charset = utf8mb4;
+
+create table flashcard
+(
+    id               bigint auto_increment comment '卡片ID'
+        primary key,
+    deck_id          bigint                                  not null comment '所属卡组ID',
+    question         text                                    not null comment '问题/正面',
+    answer           text                                    not null comment '答案/背面',
+    next_review_date date                                    not null comment '下次复习日期',
+    stage            int           default 0                 null comment '记忆阶段: 0-新卡片, 1-第1次复习, 2-第2次复习... 7-已完成',
+    review_count     int           default 0                 null comment '复习次数',
+    correct_count    int           default 0                 null comment '正确次数',
+    wrong_count      int           default 0                 null comment '错误次数',
+    difficulty       decimal(3, 2) default 1.00              null comment '难度系数: 0.50-2.00',
+    create_time      datetime      default CURRENT_TIMESTAMP null comment '创建时间',
+    update_time      datetime      default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
+    status           tinyint       default 1                 null comment '状态: 0-归档, 1-学习中, 2-已掌握',
+    constraint flashcard_ibfk_1
+        foreign key (deck_id) references flashcard_deck (id)
+            on delete cascade
+)
+    comment '闪卡表' charset = utf8mb4;
+
+create index idx_deck_status
+    on flashcard (deck_id, status);
+
+create index idx_next_review
+    on flashcard (next_review_date, status);
+
+create index user_id
+    on flashcard_deck (user_id);
+
+create table review_log
+(
+    id                   bigint auto_increment comment '记录ID'
+        primary key,
+    card_id              bigint                             not null comment '卡片ID',
+    user_id              bigint                             not null comment '用户ID',
+    review_date          datetime default CURRENT_TIMESTAMP null comment '复习时间',
+    is_correct           tinyint                            not null comment '是否记得: 0-忘了, 1-记得',
+    old_stage            int                                null comment '复习前阶段',
+    new_stage            int                                null comment '复习后阶段',
+    old_next_review_date date                               null comment '复习前下次复习日期',
+    new_next_review_date date                               null comment '复习后下次复习日期',
+    response_time        int                                null comment '响应时间(秒)',
+    constraint review_log_ibfk_1
+        foreign key (card_id) references flashcard (id)
+            on delete cascade,
+    constraint review_log_ibfk_2
+        foreign key (user_id) references sys_user (id)
+            on delete cascade
+)
+    comment '复习记录表' charset = utf8mb4;
+
+create index idx_card_date
+    on review_log (card_id, review_date);
+
+create index user_id
+    on review_log (user_id);
+

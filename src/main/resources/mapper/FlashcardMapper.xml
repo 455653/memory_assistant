@@ -37,6 +37,24 @@
         ORDER BY f.next_review_date ASC, f.id ASC
     </select>
 
+    <!-- 查询到期需要复习的卡片（支持按卡组筛选） -->
+    <select id="selectDueCardsByDecks" resultMap="BaseResultMap">
+        SELECT f.*
+        FROM flashcard f
+        INNER JOIN flashcard_deck d ON f.deck_id = d.id
+        WHERE d.user_id = #{userId}
+          AND f.next_review_date &lt;= #{today}
+          AND f.status = 1
+          AND d.status = 1
+          <if test="deckIds != null and deckIds.size() > 0">
+              AND f.deck_id IN
+              <foreach collection="deckIds" item="deckId" open="(" separator="," close=")">
+                  #{deckId}
+              </foreach>
+          </if>
+        ORDER BY f.next_review_date ASC, f.id ASC
+    </select>
+
     <!-- 根据用户ID查询所有卡片 -->
     <select id="selectByUserId" resultMap="BaseResultMap">
         SELECT f.*

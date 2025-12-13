@@ -46,6 +46,18 @@ public class ReviewService {
     }
 
     /**
+     * 获取今日需要复习的卡片列表（支持按卡组筛选）
+     *
+     * @param userId 用户ID
+     * @param deckIds 卡组ID列表（为null或空则查询所有卡组）
+     * @return 到期卡片列表
+     */
+    public List<Flashcard> getDueCards(Long userId, List<Long> deckIds) {
+        LocalDate today = LocalDate.now();
+        return flashcardMapper.selectDueCardsByDecks(userId, today, deckIds);
+    }
+
+    /**
      * 处理复习反馈 - 核心算法
      *
      * @param cardId   卡片ID

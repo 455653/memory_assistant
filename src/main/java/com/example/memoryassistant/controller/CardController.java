@@ -68,8 +68,12 @@ public class CardController {
             // 处理复习反馈（核心算法调用）
             Flashcard updatedCard = reviewService.processReview(cardId, userId, feedback);
             
-            // 获取剩余待复习卡片
-            List<Flashcard> remainingCards = reviewService.getDueCards(userId);
+            // 从 Session 获取用户选择的卡组ID
+            @SuppressWarnings("unchecked")
+            List<Long> selectedDeckIds = (List<Long>) session.getAttribute("selectedDeckIds");
+            
+            // 获取剩余待复习卡片（按选定的卡组筛选）
+            List<Flashcard> remainingCards = reviewService.getDueCards(userId, selectedDeckIds);
             
             result.put("success", true);
             result.put("message", "复习记录已保存");

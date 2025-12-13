@@ -51,14 +51,21 @@
                     <div class="card-body text-center">
                         <h3 class="text-primary">${dueCount}</h3>
                         <p class="text-muted mb-0">今日待复习卡片</p>
-                        <c:if test="${dueCount > 0}">
-                            <a href="${pageContext.request.contextPath}/review" class="btn btn-primary mt-3">
-                                开始复习 🚀
-                            </a>
-                        </c:if>
-                        <c:if test="${dueCount == 0}">
-                            <p class="text-success mt-3 mb-0">✅ 今天已完成所有复习！</p>
-                        </c:if>
+                        <c:choose>
+                            <c:when test="${dueCount > 0}">
+                                <button type="button" class="btn btn-primary mt-3" onclick="openReviewModal()">
+                                    开始复习 🚀
+                                </button>
+                            </c:when>
+                            <c:when test="${not empty decks}">
+                                <button type="button" class="btn btn-outline-primary mt-3" onclick="openReviewModal()">
+                                    选择卡组复习 📚
+                                </button>
+                            </c:when>
+                            <c:otherwise>
+                                <p class="text-success mt-3 mb-0">✅ 今天已完成所有复习！</p>
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                 </div>
             </div>
@@ -168,6 +175,91 @@
         </div>
     </div>
 
+    <!-- 选择卡组复习的弹窗 Modal -->
+    <div class="modal fade" id="selectDeckModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">📚 选择要复习的卡组</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="post" action="${pageContext.request.contextPath}/review/start" id="reviewForm">
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <small>💡 提示：</small>
+                            <ul class="small mb-0">
+                                <li>选择卡组后，只会复习该卡组中<strong>已到期</strong>的卡片</li>
+                                <li>不选择任何卡组，将复习所有卡组中<strong>已到期</strong>的卡片</li>
+                                <c:if test="${dueCount > 0}">
+                                    <li class="text-primary">当前共有 <strong>${dueCount}</strong> 张到期卡片</li>
+                                </c:if>
+                                <c:if test="${dueCount == 0}">
+                                    <li class="text-success">当前没有到期的卡片 ✅</li>
+                                </c:if>
+                            </ul>
+                        </div>
+                        
+                        <c:if test="${not empty decks}">
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleSelectAll()">
+                                    全选/反选
+                                </button>
+                            </div>
+                            
+                            <div class="row">
+                                <c:forEach var="deck" items="${decks}">
+                                    <div class="col-md-6 mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input deck-checkbox" type="checkbox" 
+                                                   name="deckIds" value="${deck.id}" id="deck_${deck.id}">
+                                            <label class="form-check-label" for="deck_${deck.id}">
+                                                <strong>${deck.deckName}</strong>
+                                                <span class="badge bg-secondary ms-2">${deck.cardCount} 张</span>
+                                                <br>
+                                                <small class="text-muted">${deck.category}</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </c:forEach>
+                            </div>
+                        </c:if>
+                        
+                        <c:if test="${empty decks}">
+                            <p class="text-muted text-center">暂无卡组</p>
+                        </c:if>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-primary">开始复习 🚀</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let selectDeckModal;
+        
+        // 初始化 Modal
+        document.addEventListener('DOMContentLoaded', function() {
+            selectDeckModal = new bootstrap.Modal(document.getElementById('selectDeckModal'));
+        });
+        
+        // 打开选择卡组的 Modal
+        function openReviewModal() {
+            selectDeckModal.show();
+        }
+        
+        // 全选/反选功能
+        function toggleSelectAll() {
+            const checkboxes = document.querySelectorAll('.deck-checkbox');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = !allChecked;
+            });
+        }
+    </script>
 </body>
 </html>

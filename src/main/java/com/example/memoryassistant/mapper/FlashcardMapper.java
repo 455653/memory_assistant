@@ -24,6 +24,15 @@ public interface FlashcardMapper {
     List<Flashcard> selectDueCards(@Param("userId") Long userId, @Param("today") LocalDate today);
     
     /**
+     * 查询到期需要复习的卡片（支持按卡组筛选）
+     * @param userId 用户ID
+     * @param today 今天日期
+     * @param deckIds 卡组ID列表（为空则查询所有卡组）
+     * @return 到期卡片列表
+     */
+    List<Flashcard> selectDueCardsByDecks(@Param("userId") Long userId, @Param("today") LocalDate today, @Param("deckIds") List<Long> deckIds);
+    
+    /**
      * 查询用户的所有卡片
      */
     List<Flashcard> selectByUserId(Long userId);

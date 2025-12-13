@@ -114,8 +114,12 @@ public class PageController {
             return "redirect:/login";
         }
 
-        // 获取今日需要复习的卡片
-        List<Flashcard> dueCards = reviewService.getDueCards(userId);
+        // 从 Session 中获取用户选择的卡组ID
+        @SuppressWarnings("unchecked")
+        List<Long> selectedDeckIds = (List<Long>) session.getAttribute("selectedDeckIds");
+        
+        // 获取今日需要复习的卡片（按选定的卡组筛选）
+        List<Flashcard> dueCards = reviewService.getDueCards(userId, selectedDeckIds);
         
         if (dueCards.isEmpty()) {
             model.addAttribute("message", "恭喜！今天没有需要复习的卡片了！");
@@ -129,6 +133,25 @@ public class PageController {
         model.addAttribute("currentIndex", 1);
 
         return "review";
+    }
+
+    /**
+     * 开始复习 - 用户选择卡组后启动复习
+     */
+    @PostMapping("/review/start")
+    public String startReview(@RequestParam(required = false) List<Long> deckIds,
+                             HttpSession session,
+                             RedirectAttributes redirectAttributes) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        // 将用户选择的卡组ID存入 Session
+        session.setAttribute("selectedDeckIds", deckIds);
+        
+        // 重定向到复习页面
+        return "redirect:/review";
     }
 
     /**
