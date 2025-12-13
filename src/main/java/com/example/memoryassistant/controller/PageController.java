@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
@@ -363,6 +364,34 @@ public class PageController {
         cardService.deleteCard(cardId);
         
         redirectAttributes.addFlashAttribute("success", "卡片删除成功！");
+        return "redirect:/decks/" + deckId;
+    }
+
+    /**
+     * 批量导入卡片从 Excel 文件
+     */
+    @PostMapping("/decks/{deckId}/cards/import")
+    public String importCards(@PathVariable Long deckId,
+                             @RequestParam("file") MultipartFile file,
+                             HttpSession session,
+                             RedirectAttributes redirectAttributes) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        FlashcardDeck deck = deckService.getDeckById(deckId);
+        if (deck == null || !deck.getUserId().equals(userId)) {
+            return "redirect:/decks";
+        }
+
+        try {
+            int count = cardService.importCards(deckId, file);
+            redirectAttributes.addFlashAttribute("success", "成功导入 " + count + " 张卡片！");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "导入失败：" + e.getMessage());
+        }
+        
         return "redirect:/decks/" + deckId;
     }
 }

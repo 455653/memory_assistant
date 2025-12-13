@@ -83,6 +83,20 @@
         )
     </insert>
 
+    <!-- 批量插入卡片 -->
+    <insert id="batchInsert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO flashcard (
+            deck_id, question, answer, next_review_date, stage,
+            review_count, correct_count, wrong_count, difficulty, status
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.deckId}, #{item.question}, #{item.answer}, #{item.nextReviewDate}, #{item.stage},
+                #{item.reviewCount}, #{item.correctCount}, #{item.wrongCount}, #{item.difficulty}, #{item.status}
+            )
+        </foreach>
+    </insert>
+
     <!-- 更新卡片 -->
     <update id="update">
         UPDATE flashcard

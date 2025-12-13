@@ -47,6 +47,14 @@
             </div>
         </c:if>
 
+        <!-- 错误消息 -->
+        <c:if test="${not empty error}">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                ${error}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </c:if>
+
         <!-- 卡组信息 -->
         <div class="card shadow-sm mb-4">
             <div class="card-body">
@@ -59,9 +67,14 @@
                             <span class="badge bg-info ms-2">${cards.size()} 张卡片</span>
                         </div>
                     </div>
-                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addCardModal">
-                        ➕ 添加卡片
-                    </button>
+                    <div>
+                        <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addCardModal">
+                            ➕ 添加卡片
+                        </button>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#importModal">
+                            📂 导入 Excel
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -173,6 +186,62 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                         <button type="submit" class="btn btn-primary">保存修改</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导入 Excel 弹窗 -->
+    <div class="modal fade" id="importModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">📂 批量导入卡片</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="post" action="${pageContext.request.contextPath}/decks/${deck.id}/cards/import" 
+                      enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <small>💡 提示：</small>
+                            <ul class="small mb-0">
+                                <li>Excel 文件格式应为 <strong>.xlsx</strong></li>
+                                <li>第一列为<strong>问题</strong>，第二列为<strong>答案</strong></li>
+                                <li>第一行为表头，从第二行开始导入数据</li>
+                            </ul>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">选择 Excel 文件 *</label>
+                            <input type="file" class="form-control" name="file" accept=".xlsx" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">模板示例：</label>
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>问题</th>
+                                        <th>答案</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Java中的JVM是什么？</td>
+                                        <td>Java虚拟机，负责执行Java字节码</td>
+                                    </tr>
+                                    <tr>
+                                        <td>HTTP协议的默认端口是？</td>
+                                        <td>80</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-primary">🚀 开始导入</button>
                     </div>
                 </form>
             </div>

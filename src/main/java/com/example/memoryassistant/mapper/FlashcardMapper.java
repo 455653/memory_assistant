@@ -48,6 +48,13 @@ public interface FlashcardMapper {
     int insert(Flashcard flashcard);
     
     /**
+     * 批量插入卡片
+     * @param list 卡片列表
+     * @return 插入成功的数量
+     */
+    int batchInsert(@Param("list") List<Flashcard> list);
+    
+    /**
      * 更新卡片
      */
     int update(Flashcard flashcard);
