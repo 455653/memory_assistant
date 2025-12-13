@@ -72,7 +72,7 @@
                             ➕ 添加卡片
                         </button>
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#importModal">
-                            📂 导入 Excel
+                            📂 批量导入
                         </button>
                     </div>
                 </div>
@@ -206,19 +206,25 @@
                         <div class="alert alert-info">
                             <small>💡 提示：</small>
                             <ul class="small mb-0">
-                                <li>Excel 文件格式应为 <strong>.xlsx</strong></li>
+                                <li>支持 <strong>.xlsx</strong> 和 <strong>.csv</strong> 两种格式</li>
                                 <li>第一列为<strong>问题</strong>，第二列为<strong>答案</strong></li>
                                 <li>第一行为表头，从第二行开始导入数据</li>
+                                <li>CSV 文件请使用 <strong>UTF-8</strong> 编码保存，避免中文乱码</li>
                             </ul>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">选择 Excel 文件 *</label>
-                            <input type="file" class="form-control" name="file" accept=".xlsx" required>
+                            <label class="form-label">选择文件 (.xlsx 或 .csv) *</label>
+                            <input type="file" class="form-control" name="file" 
+                                   accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" 
+                                   required>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">模板示例：</label>
+                            <div class="mb-2">
+                                <small class="text-muted"><strong>Excel (.xlsx) / CSV (.csv) 格式：</strong></small>
+                            </div>
                             <table class="table table-sm table-bordered">
                                 <thead class="table-light">
                                     <tr>
@@ -237,6 +243,9 @@
                                     </tr>
                                 </tbody>
                             </table>
+                            <div class="alert alert-warning alert-sm mt-2">
+                                <small>⚠️ <strong>CSV 文件注意：</strong>在 Excel 中编辑后，请选择“另存为” → 保存类型选择“CSV UTF-8（逗号分隔）”或使用文本编辑器以 UTF-8 编码保存。</small>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">

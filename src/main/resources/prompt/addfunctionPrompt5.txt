@@ -1,0 +1,137 @@
+# Role
+你是一名精通 Java Spring Boot 3.x, MyBatis 和 JSP 的全栈开发专家。
+我正在开发 "Memory-Assistant" 记忆卡片项目。
+
+# Context (当前进展)
+1.  我已经实现了 **Excel (.xlsx)** 文件的批量导入功能。
+    -   后端接口：`POST /decks/{deckId}/cards/import`
+    -   Service层：`CardService.importCards(Long deckId, MultipartFile file)` 目前只处理 Excel。
+2.  我现在需要**扩展**这个功能，使其也能支持 **CSV (.csv)** 格式文件的导入。
+
+# Requirements (需求详情)
+请帮我实现 CSV 导入功能，并将其与现有的 Excel 逻辑整合：
+
+1.  **依赖配置 (Maven)**:
+    -   请提供 `pom.xml` 中 **Apache Commons CSV** 的依赖代码（推荐使用最新稳定版）。
+
+2.  **后端 - 业务逻辑 (`CardService.java`)**:
+    -   请重构或修改 `importCards` 方法。
+    -   **格式判断逻辑**:
+        -   获取文件名后缀 (`file.getOriginalFilename()`)。
+        -   如果是 `.xlsx`，调用原有的 Excel 解析逻辑（你不需要重写这部分，保留 TODO 占位或假设它存在即可）。
+        -   如果是 `.csv`，调用新的 CSV 解析逻辑。
+    -   **CSV 解析逻辑**:
+        -   使用 `Apache Commons CSV` 库。
+        -   **关键要求**: 必须强制使用 **UTF-8** 编码读取，防止中文乱码。
+        -   格式约定：第一列是 **Question**，第二列是 **Answer**。
+        -   **跳过表头**: 默认跳过第一行 (Header Record)。
+        -   解析后构建 `Flashcard` 对象列表，调用 `flashcardMapper.batchInsert(list)` 入库。
+
+3.  **前端 - 交互 (`deck-detail.jsp`)**:
+    -   修改现有的“导入模态框”中的文件输入框。
+    -   更新 `accept` 属性，使其同时支持 `.xlsx` 和 `.csv` (例如: `accept=".xlsx, .csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/csv"`).
+
+# Constraints (约束)
+-   **编码安全**: CSV 极其容易出现编码问题（如 GBK vs UTF-8），请在代码中显式指定使用 `StandardCharsets.UTF_8`。
+-   **代码复用**: 最终入库都应使用同一个 `batchInsert` Mapper 方法。
+
+# Output Expected (你需要输出的内容)
+1.  **pom.xml** 新增的依赖。
+2.  **CardService.java** 的核心逻辑（重点展示如何根据后缀分流，以及 CSV 解析的具体代码）。
+3.  **deck-detail.jsp** 中文件输入框 (`<input type="file">`) 的修改代码。
+
+下面是我mysql数据库的脚本：
+create table sys_user
+(
+    id          bigint auto_increment comment '用户ID'
+        primary key,
+    username    varchar(50)                        not null comment '用户名',
+    password    varchar(100)                       not null comment '密码',
+    email       varchar(100)                       null comment '邮箱',
+    nickname    varchar(50)                        null comment '昵称',
+    avatar_url  varchar(255)                       null comment '头像URL',
+    create_time datetime default CURRENT_TIMESTAMP null comment '创建时间',
+    update_time datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
+    status      tinyint  default 1                 null comment '状态: 0-禁用, 1-启用',
+    constraint username
+        unique (username)
+)
+    comment '用户表' charset = utf8mb4;
+
+create table flashcard_deck
+(
+    id          bigint auto_increment comment '卡组ID'
+        primary key,
+    user_id     bigint                             not null comment '所属用户ID',
+    deck_name   varchar(100)                       not null comment '卡组名称',
+    description text                               null comment '卡组描述',
+    category    varchar(50)                        null comment '卡组分类',
+    card_count  int      default 0                 null comment '卡片数量',
+    create_time datetime default CURRENT_TIMESTAMP null comment '创建时间',
+    update_time datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
+    status      tinyint  default 1                 null comment '状态: 0-删除, 1-正常',
+    constraint flashcard_deck_ibfk_1
+        foreign key (user_id) references sys_user (id)
+            on delete cascade
+)
+    comment '卡组表' charset = utf8mb4;
+
+create table flashcard
+(
+    id               bigint auto_increment comment '卡片ID'
+        primary key,
+    deck_id          bigint                                  not null comment '所属卡组ID',
+    question         text                                    not null comment '问题/正面',
+    answer           text                                    not null comment '答案/背面',
+    next_review_date date                                    not null comment '下次复习日期',
+    stage            int           default 0                 null comment '记忆阶段: 0-新卡片, 1-第1次复习, 2-第2次复习... 7-已完成',
+    review_count     int           default 0                 null comment '复习次数',
+    correct_count    int           default 0                 null comment '正确次数',
+    wrong_count      int           default 0                 null comment '错误次数',
+    difficulty       decimal(3, 2) default 1.00              null comment '难度系数: 0.50-2.00',
+    create_time      datetime      default CURRENT_TIMESTAMP null comment '创建时间',
+    update_time      datetime      default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
+    status           tinyint       default 1                 null comment '状态: 0-归档, 1-学习中, 2-已掌握',
+    constraint flashcard_ibfk_1
+        foreign key (deck_id) references flashcard_deck (id)
+            on delete cascade
+)
+    comment '闪卡表' charset = utf8mb4;
+
+create index idx_deck_status
+    on flashcard (deck_id, status);
+
+create index idx_next_review
+    on flashcard (next_review_date, status);
+
+create index user_id
+    on flashcard_deck (user_id);
+
+create table review_log
+(
+    id                   bigint auto_increment comment '记录ID'
+        primary key,
+    card_id              bigint                             not null comment '卡片ID',
+    user_id              bigint                             not null comment '用户ID',
+    review_date          datetime default CURRENT_TIMESTAMP null comment '复习时间',
+    is_correct           tinyint                            not null comment '是否记得: 0-忘了, 1-记得',
+    old_stage            int                                null comment '复习前阶段',
+    new_stage            int                                null comment '复习后阶段',
+    old_next_review_date date                               null comment '复习前下次复习日期',
+    new_next_review_date date                               null comment '复习后下次复习日期',
+    response_time        int                                null comment '响应时间(秒)',
+    constraint review_log_ibfk_1
+        foreign key (card_id) references flashcard (id)
+            on delete cascade,
+    constraint review_log_ibfk_2
+        foreign key (user_id) references sys_user (id)
+            on delete cascade
+)
+    comment '复习记录表' charset = utf8mb4;
+
+create index idx_card_date
+    on review_log (card_id, review_date);
+
+create index user_id
+    on review_log (user_id);
+
