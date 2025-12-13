@@ -1,0 +1,12 @@
+# Step 3: Frontend Implementation
+现在我们来实现前端。请确保文件路径为 `src/main/webapp/WEB-INF/jsp/`。
+
+1. **dashboard.jsp**:
+   - 展示“今日待复习数”和“我的卡包列表”。
+   - 使用 JSTL `<c:forEach>` 遍历数据。
+2. **review.jsp (核心交互)**:
+   - 页面居中显示卡片“正面”。
+   - 点击“查看答案”按钮，使用 jQuery 渐显“背面”和“反馈按钮组”。
+   - 点击“🟢 记得”等按钮时，发送 AJAX POST 请求到后端，成功后**无需刷新页面**直接替换为下一张卡片的数据。
+3. **Project Structure**:
+   - 请最后以树形图展示一下所有文件（包括 Java, XML, JSP）应该所在的标准目录结构，防止我放错位置。

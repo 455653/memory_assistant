@@ -1,0 +1,20 @@
+# Step 2: Backend Implementation
+配置完成后，请开发后端核心逻辑。请注意使用 Lombok 简化代码。
+
+1. **Entity Classes**: 生成 User, Deck, Flashcard, ReviewLog 实体类。
+2. **Mapper Logic**:
+   - 编写 `FlashcardMapper.java` 和 `FlashcardMapper.xml`。
+   - **难点**: 编写一个 SQL 查询 `selectDueCards(Long userId, LocalDate today)`，筛选出 `next_review_date <= today` 且状态正常的卡片。
+3. **Service Logic (The Core)**:
+   - 编写 `ReviewService.java`。
+   - 实现方法 `processReview(Long cardId, String feedback)`。
+   - **算法逻辑**:
+     - 数组 intervals = [1, 2, 4, 7, 15, 30]
+     - 如果 feedback == "FORGOT": stage = 0, next_date = tomorrow
+     - 如果 feedback == "BLURRY": stage 不变, next_date = tomorrow
+     - 如果 feedback == "REMEMBER": stage + 1, next_date = today + intervals[stage]
+4. **Controller**:
+   - `PageController`: 用于跳转 JSP 页面（如 login, dashboard, review）。
+   - `CardController`: 提供 RESTful 接口供前端 AJAX 调用。
+
+请给出核心代码，特别是 Service 层的算法实现。

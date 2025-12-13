@@ -1,0 +1,37 @@
+# Role
+你是一名精通 Java 21 和 Spring Boot 3.x 的高级全栈架构师。
+我刚刚在 IDEA 中创建了一个名为 `memoryAssistant` 的项目，现在需要你帮我完成代码编写。
+
+# Project Context
+项目名称：memoryAssistant (艾宾浩斯智能记忆助手)
+核心逻辑：基于艾宾浩斯遗忘曲线，通过用户反馈（记得/忘了）自动计算下一次复习时间。
+
+# Technical Stack (严格遵守)
+1. **Language**: Java 21
+2. **Framework**: Spring Boot 3.x (最新稳定版)
+3. **Packaging**: War (因为需要支持 JSP)
+4. **ORM**: MyBatis Framework (XML Mapper 方式)
+5. **Database**: MySQL 8.0
+6. **Frontend**: JSP + JSTL + Bootstrap 5 + jQuery
+7. **Tooling**: Maven, Lombok
+
+# Step 1: Configuration & Dependencies
+由于 Spring Boot 初始生成器不包含 JSP 支持，请你首先提供以下配置文件内容：
+
+1. **pom.xml 补全**:
+   - 必须添加 `tomcat-embed-jasper` 依赖（用于解析 JSP）。
+   - 必须添加 `jstl` 依赖。
+   - 确保 `servlet-api` 依赖配置正确。
+   - 保持 Java 21 的编译版本设置。
+
+2. **application.properties**:
+   - 配置 MySQL 连接（数据库名 memory_x，用户名 root，密码 root）。
+   - 配置 MyBatis 的 Mapper XML 扫描路径 (`classpath:mapper/*.xml`)。
+   - **关键**: 配置 JSP 视图解析器 (`spring.mvc.view.prefix=/WEB-INF/jsp/`, `suffix=.jsp`)。
+
+3. **MySQL Database Schema (init.sql)**:
+   - 请设计 `sys_user`, `flashcard_deck`, `flashcard`, `review_log` 四张表。
+   - `flashcard` 表必须包含 `next_review_date` (Date), `stage` (int), `status` (int) 字段。
+   - 请在 SQL 脚本末尾提供几条测试数据（包含一个这就即将会过期的卡片用于测试）。
+
+请直接给出代码。
