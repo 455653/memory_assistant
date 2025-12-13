@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.memoryassistant.mapper.SysUserMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.memoryassistant.entity.SysUser">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <result property="email" column="email"/>
+        <result property="nickname" column="nickname"/>
+        <result property="avatarUrl" column="avatar_url"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM sys_user WHERE id = #{id}
+    </select>
+
+    <select id="selectByUsername" resultMap="BaseResultMap">
+        SELECT * FROM sys_user WHERE username = #{username}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_user (username, password, email, nickname, avatar_url, status)
+        VALUES (#{username}, #{password}, #{email}, #{nickname}, #{avatarUrl}, #{status})
+    </insert>
+
+    <update id="update">
+        UPDATE sys_user
+        SET password = #{password},
+            email = #{email},
+            nickname = #{nickname},
+            avatar_url = #{avatarUrl},
+            status = #{status}
+        WHERE id = #{id}
+    </update>
+
+</mapper>

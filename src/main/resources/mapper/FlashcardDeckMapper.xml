@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.memoryassistant.mapper.FlashcardDeckMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.memoryassistant.entity.FlashcardDeck">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="deckName" column="deck_name"/>
+        <result property="description" column="description"/>
+        <result property="category" column="category"/>
+        <result property="cardCount" column="card_count"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM flashcard_deck WHERE id = #{id}
+    </select>
+
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT * FROM flashcard_deck
+        WHERE user_id = #{userId} AND status = 1
+        ORDER BY create_time DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO flashcard_deck (user_id, deck_name, description, category, card_count, status)
+        VALUES (#{userId}, #{deckName}, #{description}, #{category}, #{cardCount}, #{status})
+    </insert>
+
+    <update id="update">
+        UPDATE flashcard_deck
+        SET deck_name = #{deckName},
+            description = #{description},
+            category = #{category},
+            card_count = #{cardCount},
+            status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        UPDATE flashcard_deck SET status = 0 WHERE id = #{id}
+    </delete>
+
+    <update id="updateCardCount">
+        UPDATE flashcard_deck
+        SET card_count = (
+            SELECT COUNT(*) FROM flashcard WHERE deck_id = #{deckId} AND status != 0
+        )
+        WHERE id = #{deckId}
+    </update>
+
+</mapper>

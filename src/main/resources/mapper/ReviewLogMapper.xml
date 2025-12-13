@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.memoryassistant.mapper.ReviewLogMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.memoryassistant.entity.ReviewLog">
+        <id property="id" column="id"/>
+        <result property="cardId" column="card_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="reviewDate" column="review_date"/>
+        <result property="isCorrect" column="is_correct"/>
+        <result property="oldStage" column="old_stage"/>
+        <result property="newStage" column="new_stage"/>
+        <result property="oldNextReviewDate" column="old_next_review_date"/>
+        <result property="newNextReviewDate" column="new_next_review_date"/>
+        <result property="responseTime" column="response_time"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM review_log WHERE id = #{id}
+    </select>
+
+    <select id="selectByCardId" resultMap="BaseResultMap">
+        SELECT * FROM review_log
+        WHERE card_id = #{cardId}
+        ORDER BY review_date DESC
+    </select>
+
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT * FROM review_log
+        WHERE user_id = #{userId}
+        ORDER BY review_date DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO review_log (
+            card_id, user_id, review_date, is_correct,
+            old_stage, new_stage, old_next_review_date, new_next_review_date, response_time
+        ) VALUES (
+            #{cardId}, #{userId}, #{reviewDate}, #{isCorrect},
+            #{oldStage}, #{newStage}, #{oldNextReviewDate}, #{newNextReviewDate}, #{responseTime}
+        )
+    </insert>
+
+</mapper>

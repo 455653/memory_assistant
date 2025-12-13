@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.memoryassistant.mapper.FlashcardMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.example.memoryassistant.entity.Flashcard">
+        <id property="id" column="id"/>
+        <result property="deckId" column="deck_id"/>
+        <result property="question" column="question"/>
+        <result property="answer" column="answer"/>
+        <result property="nextReviewDate" column="next_review_date"/>
+        <result property="stage" column="stage"/>
+        <result property="reviewCount" column="review_count"/>
+        <result property="correctCount" column="correct_count"/>
+        <result property="wrongCount" column="wrong_count"/>
+        <result property="difficulty" column="difficulty"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM flashcard WHERE id = #{id}
+    </select>
+
+    <!-- 查询到期需要复习的卡片（核心查询） -->
+    <select id="selectDueCards" resultMap="BaseResultMap">
+        SELECT f.*
+        FROM flashcard f
+        INNER JOIN flashcard_deck d ON f.deck_id = d.id
+        WHERE d.user_id = #{userId}
+          AND f.next_review_date &lt;= #{today}
+          AND f.status = 1
+          AND d.status = 1
+        ORDER BY f.next_review_date ASC, f.id ASC
+    </select>
+
+    <!-- 根据用户ID查询所有卡片 -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT f.*
+        FROM flashcard f
+        INNER JOIN flashcard_deck d ON f.deck_id = d.id
+        WHERE d.user_id = #{userId}
+          AND f.status != 0
+        ORDER BY f.create_time DESC
+    </select>
+
+    <!-- 根据卡组ID查询 -->
+    <select id="selectByDeckId" resultMap="BaseResultMap">
+        SELECT * FROM flashcard
+        WHERE deck_id = #{deckId} AND status != 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 插入卡片 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO flashcard (
+            deck_id, question, answer, next_review_date, stage,
+            review_count, correct_count, wrong_count, difficulty, status
+        ) VALUES (
+            #{deckId}, #{question}, #{answer}, #{nextReviewDate}, #{stage},
+            #{reviewCount}, #{correctCount}, #{wrongCount}, #{difficulty}, #{status}
+        )
+    </insert>
+
+    <!-- 更新卡片 -->
+    <update id="update">
+        UPDATE flashcard
+        SET deck_id = #{deckId},
+            question = #{question},
+            answer = #{answer},
+            next_review_date = #{nextReviewDate},
+            stage = #{stage},
+            review_count = #{reviewCount},
+            correct_count = #{correctCount},
+            wrong_count = #{wrongCount},
+            difficulty = #{difficulty},
+            status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除卡片 -->
+    <delete id="deleteById">
+        DELETE FROM flashcard WHERE id = #{id}
+    </delete>
+
+</mapper>
