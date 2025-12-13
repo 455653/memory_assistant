@@ -92,9 +92,24 @@
                             <div class="mb-2">
                                 <span class="badge bg-info">阶段 ${card.stage}</span>
                             </div>
-                            <div class="small text-muted">
+                            <div class="small text-muted mb-3">
                                 <div>复习 ${card.reviewCount} 次</div>
                                 <div>正确 ${card.correctCount} 次</div>
+                            </div>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-primary edit-card-btn"
+                                        data-card-id="${card.id}"
+                                        data-card-question="${card.question}"
+                                        data-card-answer="${card.answer}"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#editCardModal">
+                                    ✏️ 编辑
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger delete-card-btn"
+                                        data-card-id="${card.id}"
+                                        onclick="deleteCard(${card.id})">
+                                    🗑️ 删除
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -133,6 +148,68 @@
         </div>
     </div>
 
+    <!-- 编辑卡片弹窗 -->
+    <div class="modal fade" id="editCardModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">编辑卡片</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="post" action="${pageContext.request.contextPath}/decks/${deck.id}/cards/update">
+                    <input type="hidden" id="editCardId" name="id">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">问题（正面） *</label>
+                            <textarea class="form-control" id="editCardQuestion" name="question" rows="4" required 
+                                      placeholder="输入卡片的问题..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">答案（背面） *</label>
+                            <textarea class="form-control" id="editCardAnswer" name="answer" rows="6" required 
+                                      placeholder="输入卡片的答案..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" class="btn btn-primary">保存修改</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 编辑卡片 - 回显数据到Modal
+        document.addEventListener('DOMContentLoaded', function() {
+            const editButtons = document.querySelectorAll('.edit-card-btn');
+            
+            editButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const cardId = this.getAttribute('data-card-id');
+                    const cardQuestion = this.getAttribute('data-card-question');
+                    const cardAnswer = this.getAttribute('data-card-answer');
+                    
+                    // 填充表单数据
+                    document.getElementById('editCardId').value = cardId;
+                    document.getElementById('editCardQuestion').value = cardQuestion;
+                    document.getElementById('editCardAnswer').value = cardAnswer;
+                });
+            });
+        });
+
+        // 删除卡片
+        function deleteCard(cardId) {
+            if (confirm('确定要删除这张卡片吗？此操作不可恢复！')) {
+                // 创建并提交表单
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '${pageContext.request.contextPath}/decks/${deck.id}/cards/' + cardId + '/delete';
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    </script>
 </body>
 </html>

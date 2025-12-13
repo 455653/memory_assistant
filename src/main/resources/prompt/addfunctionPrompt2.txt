@@ -1,0 +1,41 @@
+# Role
+你是一名精通 Java Spring Boot 3.x, MyBatis 和 JSP 的全栈开发专家。
+我正在开发 "Memory-X" 记忆卡片项目。
+
+# Current Status (当前状态)
+1.  **Service层**: `CardService.java` 中已经实现了 `updateCard(Flashcard card)` 和 `deleteCard(Long cardId)` 方法。
+2.  **Frontend**: `deck-detail.jsp` 页面目前只能展示卡片列表和添加新卡片，缺少“编辑”和“删除”功能。
+3.  **Backend**: 卡组相关的页面跳转由 `DeckController` (或 PageController) 处理。
+
+# Task (你的任务)
+请帮我完善 **卡片管理 (Card Management)** 的功能，具体包括：
+
+1.  **前端修改 (`deck-detail.jsp`)**:
+    -   在卡片列表的每个 `card-item` 中增加 **“编辑”** 和 **“删除”** 按钮（放在右侧）。
+    -   **编辑功能**:
+        -   点击“编辑”按钮，弹出一个新的 Bootstrap Modal (`#editCardModal`)。
+        -   该 Modal 需要自动回显当前卡片的 `id`, `question`, `answer`。
+        -   建议使用 JavaScript/jQuery 在点击按钮时将数据填充到 Modal 中。
+    -   **删除功能**:
+        -   点击“删除”按钮，弹出 JavaScript `confirm` 确认框。
+        -   确认后，请求后端的删除接口。
+
+2.  **后端修改 (`DeckController.java`)**:
+    -   请在 `DeckController` 中增加处理卡片更新和删除的接口（不要写在 RestController 里，因为需要页面跳转）：
+    -   **Update**: `POST /decks/{deckId}/cards/update`
+        -   接收 `id`, `question`, `answer`。
+        -   调用 `cardService.updateCard`。
+        -   成功后重定向回 `deck_detail` 页面。
+    -   **Delete**: `GET` 或 `POST /decks/{deckId}/cards/{cardId}/delete`
+        -   调用 `cardService.deleteCard`。
+        -   成功后重定向回 `deck_detail` 页面。
+
+# Constraints (技术约束)
+-   使用 Bootstrap 5 的 Modal 组件。
+-   使用 JSTL `<c:url>` 生成路径。
+-   Controller 方法参数中请包含 `deckId` 以便重定向能够跳回正确的页面。
+-   保持现有的代码风格。
+
+# Output Expected (你需要输出的内容)
+1.  **DeckController.java** 的新增代码片段（只输出新增的方法即可）。
+2.  **deck-detail.jsp** 的完整更新代码（包含新增的按钮、编辑 Modal 和 JavaScript 逻辑）。

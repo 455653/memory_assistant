@@ -277,4 +277,69 @@ public class PageController {
         redirectAttributes.addFlashAttribute("success", "卡片添加成功！");
         return "redirect:/decks/" + deckId;
     }
+
+    /**
+     * 更新卡片
+     */
+    @PostMapping("/decks/{deckId}/cards/update")
+    public String updateCard(@PathVariable Long deckId,
+                            @RequestParam Long id,
+                            @RequestParam String question,
+                            @RequestParam String answer,
+                            HttpSession session,
+                            RedirectAttributes redirectAttributes) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        FlashcardDeck deck = deckService.getDeckById(deckId);
+        if (deck == null || !deck.getUserId().equals(userId)) {
+            return "redirect:/decks";
+        }
+
+        Flashcard card = cardService.getCardById(id);
+        if (card == null || !card.getDeckId().equals(deckId)) {
+            redirectAttributes.addFlashAttribute("error", "卡片不存在！");
+            return "redirect:/decks/" + deckId;
+        }
+
+        card.setQuestion(question);
+        card.setAnswer(answer);
+        
+        cardService.updateCard(card);
+        
+        redirectAttributes.addFlashAttribute("success", "卡片更新成功！");
+        return "redirect:/decks/" + deckId;
+    }
+
+    /**
+     * 删除卡片
+     */
+    @PostMapping("/decks/{deckId}/cards/{cardId}/delete")
+    public String deleteCard(@PathVariable Long deckId,
+                            @PathVariable Long cardId,
+                            HttpSession session,
+                            RedirectAttributes redirectAttributes) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        FlashcardDeck deck = deckService.getDeckById(deckId);
+        if (deck == null || !deck.getUserId().equals(userId)) {
+            return "redirect:/decks";
+        }
+
+        Flashcard card = cardService.getCardById(cardId);
+        if (card == null || !card.getDeckId().equals(deckId)) {
+            redirectAttributes.addFlashAttribute("error", "卡片不存在！");
+            return "redirect:/decks/" + deckId;
+        }
+
+        cardService.deleteCard(cardId);
+        
+        redirectAttributes.addFlashAttribute("success", "卡片删除成功！");
+        return "redirect:/decks/" + deckId;
+    }
 }
