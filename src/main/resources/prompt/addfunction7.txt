@@ -1,0 +1,26 @@
+# Role
+你是一名精通 Java Spring Boot 3.x, MyBatis 和 JSP 的全栈开发专家。
+我正在开发 "Memory-Assistant" 记忆卡片项目，目前项目已有登录功能，现在需要你帮我**新增“用户注册”功能**。
+
+# Context (项目背景)
+1.  **现有表结构**: 数据库中已有 `sys_user` 表，包含 `username`, `password`, `email`, `nickname`, `status` 等字段。
+2.  **现有代码**:
+    -   User Entity: `SysUser.java`
+    -   Mapper: `SysUserMapper.java` / `SysUserMapper.xml`
+    -   Service: `UserService.java`
+    -   Controller: `PageController.java` (负责页面跳转)
+    -   View: `login.jsp` (已有登录页，使用 Bootstrap 5)
+
+# Database Schema (Reference)
+请严格基于以下 SQL 脚本编写代码，不要修改表结构：
+```sql
+create table sys_user (
+    id          bigint auto_increment primary key,
+    username    varchar(50) not null unique,
+    password    varchar(100) not null, -- 注意：存入数据库前建议加密
+    email       varchar(100) null,
+    nickname    varchar(50) null,
+    avatar_url  varchar(255) null,
+    create_time datetime default CURRENT_TIMESTAMP,
+    status      tinyint default 1 -- 注册后默认启用
+) comment '用户表';

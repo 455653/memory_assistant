@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>登录 - Memory Assistant</title>
+    <title>注册 - Memory Assistant</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -37,15 +37,15 @@
             background: linear-gradient(135deg, rgba(78, 115, 223, 0.85) 0%, rgba(118, 75, 162, 0.85) 100%);
         }
         
-        .login-container {
+        .register-container {
             position: relative;
             z-index: 1;
             width: 100%;
-            max-width: 450px;
+            max-width: 500px;
             padding: 20px;
         }
         
-        .login-card {
+        .register-card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
@@ -121,7 +121,7 @@
             padding-left: 45px;
         }
         
-        .btn-login {
+        .btn-register {
             background: linear-gradient(135deg, #4e73df 0%, #764ba2 100%);
             border: none;
             border-radius: 12px;
@@ -136,13 +136,13 @@
             box-shadow: 0 5px 15px rgba(78, 115, 223, 0.3);
         }
         
-        .btn-login:hover {
+        .btn-register:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(78, 115, 223, 0.4);
             background: linear-gradient(135deg, #5a7ee6 0%, #8257ad 100%);
         }
         
-        .btn-login:active {
+        .btn-register:active {
             transform: translateY(0);
         }
         
@@ -157,13 +157,31 @@
             border-left: 4px solid #dc3545;
         }
         
-        .hint-text {
+        .login-link {
             text-align: center;
             color: #858796;
-            font-size: 13px;
+            font-size: 14px;
             padding: 15px;
             background: #f8f9fc;
             border-radius: 10px;
+        }
+        
+        .login-link a {
+            color: #4e73df;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        
+        .login-link a:hover {
+            color: #2e59d9;
+            text-decoration: underline;
+        }
+        
+        .form-text {
+            font-size: 12px;
+            color: #858796;
+            margin-top: 5px;
         }
         
         @keyframes fadeIn {
@@ -177,18 +195,18 @@
             }
         }
         
-        .login-card {
+        .register-card {
             animation: fadeIn 0.6s ease;
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-card">
+    <div class="register-container">
+        <div class="register-card">
             <div class="logo">
                 <span class="logo-icon">🧠</span>
                 <h1>Memory Assistant</h1>
-                <p>艾宾浩斯智能记忆助手</p>
+                <p>创建你的学习账户</p>
             </div>
             
             <c:if test="${not empty error}">
@@ -197,45 +215,66 @@
                 </div>
             </c:if>
             
-            <form method="post" action="${pageContext.request.contextPath}/login">
+            <form method="post" action="${pageContext.request.contextPath}/register">
                 <div class="mb-4">
                     <label for="username" class="form-label">
-                        <i class="bi bi-person-fill me-1"></i>用户名
+                        <i class="bi bi-person-fill me-1"></i>用户名 *
                     </label>
                     <div class="input-group-icon">
                         <i class="bi bi-person input-icon"></i>
                         <input type="text" class="form-control" id="username" name="username" 
-                               placeholder="请输入用户名" required autofocus>
+                               placeholder="请输入用户名" value="${username}" required autofocus
+                               minlength="3" maxlength="50">
                     </div>
+                    <div class="form-text">用户名长度为 3-50 个字符</div>
                 </div>
                 
                 <div class="mb-4">
                     <label for="password" class="form-label">
-                        <i class="bi bi-lock-fill me-1"></i>密码
+                        <i class="bi bi-lock-fill me-1"></i>密码 *
                     </label>
                     <div class="input-group-icon">
                         <i class="bi bi-shield-lock input-icon"></i>
                         <input type="password" class="form-control" id="password" name="password" 
-                               placeholder="请输入密码" required>
+                               placeholder="请输入密码" required
+                               minlength="6" maxlength="100">
                     </div>
+                    <div class="form-text">密码长度至少为 6 个字符</div>
                 </div>
                 
-                <button type="submit" class="btn-login">
-                    <i class="bi bi-box-arrow-in-right me-2"></i>登录
+                <div class="mb-4">
+                    <label for="email" class="form-label">
+                        <i class="bi bi-envelope-fill me-1"></i>邮箱
+                    </label>
+                    <div class="input-group-icon">
+                        <i class="bi bi-envelope input-icon"></i>
+                        <input type="email" class="form-control" id="email" name="email" 
+                               placeholder="请输入邮箱（选填）" value="${email}"
+                               maxlength="100">
+                    </div>
+                    <div class="form-text">用于账户找回和通知</div>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="nickname" class="form-label">
+                        <i class="bi bi-tag-fill me-1"></i>昵称
+                    </label>
+                    <div class="input-group-icon">
+                        <i class="bi bi-tag input-icon"></i>
+                        <input type="text" class="form-control" id="nickname" name="nickname" 
+                               placeholder="请输入昵称（选填，默认使用用户名）" value="${nickname}"
+                               maxlength="50">
+                    </div>
+                    <div class="form-text">显示在个人资料中</div>
+                </div>
+                
+                <button type="submit" class="btn-register">
+                    <i class="bi bi-person-plus me-2"></i>注册
                 </button>
                 
-                <div class="hint-text">
+                <div class="login-link">
                     <i class="bi bi-info-circle me-1"></i>
-                    <small>测试账号: testuser / password123</small>
-                </div>
-                
-                <div class="text-center mt-3">
-                    <small class="text-muted">
-                        还没有账户？
-                        <a href="${pageContext.request.contextPath}/register" style="color: #4e73df; text-decoration: none; font-weight: 600;">
-                            立即注册
-                        </a>
-                    </small>
+                    已有账户？<a href="${pageContext.request.contextPath}/login">立即登录</a>
                 </div>
             </form>
         </div>

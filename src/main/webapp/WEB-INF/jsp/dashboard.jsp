@@ -233,6 +233,14 @@
             <h2><i class="bi bi-emoji-smile me-2"></i>欢迎回来, ${sessionScope.nickname}!</h2>
             <p><i class="bi bi-calendar-check me-2"></i>今天也要努力学习哦 💪</p>
         </div>
+        
+        <!-- 成功消息（注册成功后显示） -->
+        <c:if test="${not empty success}">
+            <div class="alert alert-success alert-modern alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle me-2"></i>${success}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </c:if>
         <!-- 统计卡片 -->
         <div class="row mb-4">
             <div class="col-md-6">

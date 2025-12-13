@@ -55,6 +55,14 @@ public class PageController {
     }
 
     /**
+     * 注册页面
+     */
+    @GetMapping("/register")
+    public String registerPage() {
+        return "register";
+    }
+
+    /**
      * 登录处理
      */
     @PostMapping("/login")
@@ -71,6 +79,45 @@ public class PageController {
         } else {
             model.addAttribute("error", "用户名或密码错误");
             return "login";
+        }
+    }
+
+    /**
+     * 注册处理
+     */
+    @PostMapping("/register")
+    public String register(@RequestParam String username,
+                          @RequestParam String password,
+                          @RequestParam(required = false) String email,
+                          @RequestParam(required = false) String nickname,
+                          HttpSession session,
+                          RedirectAttributes redirectAttributes,
+                          Model model) {
+        try {
+            // 执行注册
+            SysUser user = userService.register(username, password, email, nickname);
+            
+            // 注册成功，自动登录
+            session.setAttribute("userId", user.getId());
+            session.setAttribute("username", user.getUsername());
+            session.setAttribute("nickname", user.getNickname());
+            
+            redirectAttributes.addFlashAttribute("success", "注册成功！欢迎加入 Memory Assistant！");
+            return "redirect:/dashboard";
+        } catch (IllegalArgumentException e) {
+            // 用户名已存在
+            model.addAttribute("error", e.getMessage());
+            model.addAttribute("username", username);
+            model.addAttribute("email", email);
+            model.addAttribute("nickname", nickname);
+            return "register";
+        } catch (Exception e) {
+            // 其他错误
+            model.addAttribute("error", "注册失败，请稍后重试");
+            model.addAttribute("username", username);
+            model.addAttribute("email", email);
+            model.addAttribute("nickname", nickname);
+            return "register";
         }
     }
 

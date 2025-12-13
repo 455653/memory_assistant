@@ -49,4 +49,38 @@ public class UserService {
         userMapper.insert(user);
         return user;
     }
+
+    /**
+     * 用户注册
+     * @param username 用户名
+     * @param password 密码
+     * @param email 邮箱
+     * @param nickname 昵称
+     * @return 注册成功的用户对象
+     * @throws IllegalArgumentException 当用户名已存在时抛出
+     */
+    public SysUser register(String username, String password, String email, String nickname) {
+        // 检查用户名是否已存在
+        if (userMapper.selectByUsername(username) != null) {
+            throw new IllegalArgumentException("用户名已存在");
+        }
+        
+        // 创建新用户
+        SysUser user = new SysUser();
+        user.setUsername(username);
+        user.setPassword(password); // 注意：实际项目中应该对密码进行加密
+        user.setEmail(email);
+        user.setNickname(nickname != null && !nickname.isEmpty() ? nickname : username);
+        user.setStatus(1);
+        
+        userMapper.insert(user);
+        return user;
+    }
+
+    /**
+     * 检查用户名是否已存在
+     */
+    public boolean isUsernameExists(String username) {
+        return userMapper.selectByUsername(username) != null;
+    }
 }
