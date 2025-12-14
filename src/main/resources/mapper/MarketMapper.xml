@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.memoryassistant.mapper.MarketMapper">
+
+    <!-- MarketDeck 结果映射 -->
+    <resultMap id="MarketDeckResultMap" type="com.example.memoryassistant.entity.MarketDeck">
+        <id property="id" column="id"/>
+        <result property="deckName" column="deck_name"/>
+        <result property="description" column="description"/>
+        <result property="category" column="category"/>
+        <result property="price" column="price"/>
+        <result property="coverUrl" column="cover_url"/>
+        <result property="cardCount" column="card_count"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <!-- MarketCard 结果映射 -->
+    <resultMap id="MarketCardResultMap" type="com.example.memoryassistant.entity.MarketCard">
+        <id property="id" column="id"/>
+        <result property="marketDeckId" column="market_deck_id"/>
+        <result property="question" column="question"/>
+        <result property="answer" column="answer"/>
+        <result property="difficultyLevel" column="difficulty_level"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <!-- 查询所有上架的商店卡组 -->
+    <select id="selectAllMarketDecks" resultMap="MarketDeckResultMap">
+        SELECT * FROM sys_market_deck
+        WHERE status = 1
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据ID查询商店卡组 -->
+    <select id="selectMarketDeckById" resultMap="MarketDeckResultMap">
+        SELECT * FROM sys_market_deck
+        WHERE id = #{id} AND status = 1
+    </select>
+
+    <!-- 根据商店卡组ID查询所有卡片 -->
+    <select id="selectCardsByMarketDeckId" resultMap="MarketCardResultMap">
+        SELECT * FROM sys_market_card
+        WHERE market_deck_id = #{marketDeckId} AND status = 1
+        ORDER BY id ASC
+    </select>
+
+</mapper>

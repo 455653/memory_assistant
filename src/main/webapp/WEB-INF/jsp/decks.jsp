@@ -32,6 +32,7 @@
             <span class="navbar-brand mb-0 h1">🧠 Memory Assistant</span>
             <div class="d-flex">
                 <a href="${pageContext.request.contextPath}/dashboard" class="btn btn-outline-light btn-sm me-2">返回首页</a>
+                <a href="${pageContext.request.contextPath}/market" class="btn btn-outline-light btn-sm me-2">VIP商店</a>
                 <a href="${pageContext.request.contextPath}/logout" class="btn btn-outline-light btn-sm">退出</a>
             </div>
         </div>

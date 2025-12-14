@@ -217,6 +217,9 @@
                 <i class="bi bi-brain"></i> Memory Assistant
             </a>
             <div class="d-flex align-items-center">
+                <a href="${pageContext.request.contextPath}/market" class="btn btn-outline-light btn-modern me-2">
+                    <i class="bi bi-cart me-1"></i>VIP商店
+                </a>
                 <a href="${pageContext.request.contextPath}/decks" class="btn btn-light btn-modern me-2">
                     <i class="bi bi-folder me-1"></i>卡组管理
                 </a>
