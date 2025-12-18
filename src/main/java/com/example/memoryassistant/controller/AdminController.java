@@ -2,13 +2,16 @@ package com.example.memoryassistant.controller;
 
 import com.example.memoryassistant.dto.FeedbackDetailDTO;
 import com.example.memoryassistant.dto.SalesRecordDTO;
+import com.example.memoryassistant.entity.MarketCard;
 import com.example.memoryassistant.entity.MarketDeck;
 import com.example.memoryassistant.entity.SysUser;
 import com.example.memoryassistant.mapper.*;
+import com.example.memoryassistant.service.MarketService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
@@ -27,15 +30,18 @@ public class AdminController {
     private final MarketMapper marketMapper;
     private final MarketFeedbackMapper feedbackMapper;
     private final FlashcardDeckMapper deckMapper;
+    private final MarketService marketService;
 
     public AdminController(SysUserMapper userMapper,
                           MarketMapper marketMapper,
                           MarketFeedbackMapper feedbackMapper,
-                          FlashcardDeckMapper deckMapper) {
+                          FlashcardDeckMapper deckMapper,
+                          MarketService marketService) {
         this.userMapper = userMapper;
         this.marketMapper = marketMapper;
         this.feedbackMapper = feedbackMapper;
         this.deckMapper = deckMapper;
+        this.marketService = marketService;
     }
 
     /**
@@ -145,5 +151,128 @@ public class AdminController {
         model.addAttribute("salesRecords", salesRecords);
         model.addAttribute("totalRevenue", totalRevenue);
         return "admin/sales_list";
+    }
+    
+    /**
+     * VIP卡组创建页面
+     */
+    @GetMapping("/market/create")
+    public String marketCreatePage() {
+        return "admin/market_form";
+    }
+    
+    /**
+     * VIP卡组编辑页面
+     */
+    @GetMapping("/market/edit/{id}")
+    public String marketEditPage(@PathVariable Long id, Model model) {
+        MarketDeck deck = marketMapper.selectMarketDeckById(id);
+        if (deck == null) {
+            return "redirect:/admin/market";
+        }
+        
+        List<MarketCard> cards = marketService.getMarketCards(id);
+        
+        model.addAttribute("deck", deck);
+        model.addAttribute("cards", cards);
+        model.addAttribute("isEdit", true);
+        
+        return "admin/market_form";
+    }
+    
+    /**
+     * 创建VIP卡组
+     */
+    @PostMapping("/market/create")
+    public String createMarketDeck(@RequestParam String deckName,
+                                   @RequestParam(required = false) String description,
+                                   @RequestParam(required = false) String category,
+                                   @RequestParam BigDecimal price,
+                                   @RequestParam("file") MultipartFile file,
+                                   RedirectAttributes redirectAttributes) {
+        try {
+            Long deckId = marketService.createMarketDeck(deckName, description, category, price, file);
+            redirectAttributes.addFlashAttribute("success", "VIP卡组创建成功！");
+            return "redirect:/admin/market/edit/" + deckId;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "创建失败：" + e.getMessage());
+            return "redirect:/admin/market/create";
+        }
+    }
+    
+    /**
+     * 更新VIP卡组
+     */
+    @PostMapping("/market/update")
+    public String updateMarketDeck(@RequestParam Long id,
+                                   @RequestParam String deckName,
+                                   @RequestParam(required = false) String description,
+                                   @RequestParam(required = false) String category,
+                                   @RequestParam BigDecimal price,
+                                   RedirectAttributes redirectAttributes) {
+        try {
+            marketService.updateMarketDeck(id, deckName, description, category, price);
+            redirectAttributes.addFlashAttribute("success", "更新成功！");
+            return "redirect:/admin/market/edit/" + id;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "更新失败：" + e.getMessage());
+            return "redirect:/admin/market/edit/" + id;
+        }
+    }
+    
+    /**
+     * 追加导入卡片
+     */
+    @PostMapping("/market/import")
+    public String importMoreCards(@RequestParam Long deckId,
+                                  @RequestParam("file") MultipartFile file,
+                                  RedirectAttributes redirectAttributes) {
+        try {
+            int count = marketService.importMoreCards(deckId, file);
+            redirectAttributes.addFlashAttribute("success", "成功导入 " + count + " 张卡片！");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "导入失败：" + e.getMessage());
+        }
+        return "redirect:/admin/market/edit/" + deckId;
+    }
+    
+    /**
+     * 更新卡片 (AJAX)
+     */
+    @PostMapping("/market/card/update")
+    @ResponseBody
+    public Map<String, Object> updateMarketCard(@RequestParam Long id,
+                                                @RequestParam String question,
+                                                @RequestParam String answer,
+                                                @RequestParam(defaultValue = "1") Integer difficultyLevel) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            marketService.updateMarketCard(id, question, answer, difficultyLevel);
+            result.put("success", true);
+            result.put("message", "更新成功");
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "更新失败：" + e.getMessage());
+        }
+        return result;
+    }
+    
+    /**
+     * 删除卡片 (AJAX)
+     */
+    @PostMapping("/market/card/delete")
+    @ResponseBody
+    public Map<String, Object> deleteMarketCard(@RequestParam Long id,
+                                                @RequestParam Long deckId) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            marketService.deleteMarketCard(id, deckId);
+            result.put("success", true);
+            result.put("message", "删除成功");
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "删除失败：" + e.getMessage());
+        }
+        return result;
     }
 }

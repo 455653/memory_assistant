@@ -9,13 +9,24 @@ import com.example.memoryassistant.entity.MarketDeck;
 import com.example.memoryassistant.entity.MarketFeedback;
 import com.example.memoryassistant.mapper.FlashcardDeckMapper;
 import com.example.memoryassistant.mapper.FlashcardMapper;
+import com.example.memoryassistant.mapper.MarketCardMapper;
 import com.example.memoryassistant.mapper.MarketCommentMapper;
 import com.example.memoryassistant.mapper.MarketFeedbackMapper;
 import com.example.memoryassistant.mapper.MarketMapper;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,17 +42,20 @@ public class MarketService {
     private final FlashcardMapper flashcardMapper;
     private final MarketCommentMapper commentMapper;
     private final MarketFeedbackMapper feedbackMapper;
+    private final MarketCardMapper marketCardMapper;
 
     public MarketService(MarketMapper marketMapper, 
                         FlashcardDeckMapper deckMapper, 
                         FlashcardMapper flashcardMapper,
                         MarketCommentMapper commentMapper,
-                        MarketFeedbackMapper feedbackMapper) {
+                        MarketFeedbackMapper feedbackMapper,
+                        MarketCardMapper marketCardMapper) {
         this.marketMapper = marketMapper;
         this.deckMapper = deckMapper;
         this.flashcardMapper = flashcardMapper;
         this.commentMapper = commentMapper;
         this.feedbackMapper = feedbackMapper;
+        this.marketCardMapper = marketCardMapper;
     }
 
     /**
@@ -218,5 +232,226 @@ public class MarketService {
         
         // 插入反馈
         feedbackMapper.insert(feedback);
+    }
+    
+    /**
+     * 管理员创建VIP卡组（含文件导入）
+     * 
+     * @param deckName 卡组名称
+     * @param description 卡组描述
+     * @param category 分类
+     * @param price 价格
+     * @param file 导入文件 (CSV/XLSX)
+     * @return 创建的卡组ID
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public Long createMarketDeck(String deckName, String description, String category, 
+                                 BigDecimal price, MultipartFile file) throws IOException {
+        // 1. 创建VIP卡组
+        MarketDeck deck = new MarketDeck();
+        deck.setDeckName(deckName);
+        deck.setDescription(description);
+        deck.setCategory(category);
+        deck.setPrice(price);
+        deck.setCardCount(0);
+        deck.setStatus(1); // 默认上架
+        
+        marketMapper.insert(deck);
+        Long deckId = deck.getId();
+        
+        // 2. 解析并导入卡片
+        if (file != null && !file.isEmpty()) {
+            List<MarketCard> cards = parseCardsFromFile(file, deckId);
+            if (!cards.isEmpty()) {
+                marketCardMapper.batchInsert(cards);
+                // 更新卡片数量
+                marketMapper.updateCardCount(deckId, cards.size());
+            }
+        }
+        
+        return deckId;
+    }
+    
+    /**
+     * 管理员更新VIP卡组
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void updateMarketDeck(Long id, String deckName, String description, 
+                                 String category, BigDecimal price) {
+        MarketDeck deck = new MarketDeck();
+        deck.setId(id);
+        deck.setDeckName(deckName);
+        deck.setDescription(description);
+        deck.setCategory(category);
+        deck.setPrice(price);
+        
+        marketMapper.update(deck);
+    }
+    
+    /**
+     * 管理员追加导入卡片
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public int importMoreCards(Long deckId, MultipartFile file) throws IOException {
+        List<MarketCard> cards = parseCardsFromFile(file, deckId);
+        if (!cards.isEmpty()) {
+            marketCardMapper.batchInsert(cards);
+            // 更新卡片数量
+            int totalCount = marketCardMapper.countByDeckId(deckId);
+            marketMapper.updateCardCount(deckId, totalCount);
+        }
+        return cards.size();
+    }
+    
+    /**
+     * 管理员更新单张卡片
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void updateMarketCard(Long id, String question, String answer, Integer difficultyLevel) {
+        MarketCard card = new MarketCard();
+        card.setId(id);
+        card.setQuestion(question);
+        card.setAnswer(answer);
+        card.setDifficultyLevel(difficultyLevel);
+        
+        marketCardMapper.update(card);
+    }
+    
+    /**
+     * 管理员删除卡片
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteMarketCard(Long cardId, Long deckId) {
+        marketCardMapper.deleteById(cardId);
+        // 更新卡片数量
+        int totalCount = marketCardMapper.countByDeckId(deckId);
+        marketMapper.updateCardCount(deckId, totalCount);
+    }
+    
+    /**
+     * 获取卡组下的所有卡片
+     */
+    public List<MarketCard> getMarketCards(Long deckId) {
+        return marketCardMapper.selectByDeckId(deckId);
+    }
+    
+    /**
+     * 解析文件（复用CardService的逻辑）
+     */
+    private List<MarketCard> parseCardsFromFile(MultipartFile file, Long deckId) throws IOException {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("文件不能为空");
+        }
+        
+        String filename = file.getOriginalFilename();
+        if (filename == null) {
+            throw new IllegalArgumentException("文件名不能为空");
+        }
+        
+        if (filename.toLowerCase().endsWith(".xlsx")) {
+            return parseExcelFile(file, deckId);
+        } else if (filename.toLowerCase().endsWith(".csv")) {
+            return parseCsvFile(file, deckId);
+        } else {
+            throw new IllegalArgumentException("只支持 .xlsx 或 .csv 格式的文件");
+        }
+    }
+    
+    /**
+     * 解析Excel文件
+     */
+    private List<MarketCard> parseExcelFile(MultipartFile file, Long deckId) throws IOException {
+        List<MarketCard> cards = new ArrayList<>();
+        
+        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+            
+            for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
+                Row row = sheet.getRow(rowIndex);
+                if (row == null) continue;
+                
+                Cell questionCell = row.getCell(0);
+                Cell answerCell = row.getCell(1);
+                
+                if (questionCell == null || answerCell == null) continue;
+                
+                String question = getCellValueAsString(questionCell);
+                String answer = getCellValueAsString(answerCell);
+                
+                if (question.trim().isEmpty() || answer.trim().isEmpty()) continue;
+                
+                MarketCard card = new MarketCard();
+                card.setMarketDeckId(deckId);
+                card.setQuestion(question.trim());
+                card.setAnswer(answer.trim());
+                card.setDifficultyLevel(1); // 默认简单
+                card.setStatus(1);
+                
+                cards.add(card);
+            }
+        }
+        
+        return cards;
+    }
+    
+    /**
+     * 解析CSV文件
+     */
+    private List<MarketCard> parseCsvFile(MultipartFile file, Long deckId) throws IOException {
+        List<MarketCard> cards = new ArrayList<>();
+        
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
+             CSVParser csvParser = new CSVParser(reader, 
+                CSVFormat.DEFAULT.builder()
+                    .setHeader()
+                    .setSkipHeaderRecord(true)
+                    .setTrim(true)
+                    .build())) {
+            
+            for (CSVRecord record : csvParser) {
+                if (record.size() < 2) continue;
+                
+                String question = record.get(0);
+                String answer = record.get(1);
+                
+                if (question == null || answer == null || 
+                    question.trim().isEmpty() || answer.trim().isEmpty()) {
+                    continue;
+                }
+                
+                MarketCard card = new MarketCard();
+                card.setMarketDeckId(deckId);
+                card.setQuestion(question.trim());
+                card.setAnswer(answer.trim());
+                card.setDifficultyLevel(1);
+                card.setStatus(1);
+                
+                cards.add(card);
+            }
+        }
+        
+        return cards;
+    }
+    
+    /**
+     * 获取单元格的字符串值
+     */
+    private String getCellValueAsString(Cell cell) {
+        if (cell == null) return "";
+        
+        return switch (cell.getCellType()) {
+            case STRING -> cell.getStringCellValue();
+            case NUMERIC -> {
+                if (DateUtil.isCellDateFormatted(cell)) {
+                    yield cell.getDateCellValue().toString();
+                } else {
+                    yield String.valueOf((long) cell.getNumericCellValue());
+                }
+            }
+            case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
+            case FORMULA -> cell.getCellFormula();
+            default -> "";
+        };
     }
 }

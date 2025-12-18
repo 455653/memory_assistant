@@ -39,4 +39,19 @@ public interface MarketMapper {
      * 更新卡组状态
      */
     int updateStatus(@Param("id") Long id, @Param("status") Integer status);
+    
+    /**
+     * 插入卡组
+     */
+    int insert(MarketDeck deck);
+    
+    /**
+     * 更新卡组
+     */
+    int update(MarketDeck deck);
+    
+    /**
+     * 更新卡组的卡片数量
+     */
+    int updateCardCount(@Param("id") Long id, @Param("cardCount") int cardCount);
 }

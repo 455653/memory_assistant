@@ -74,7 +74,12 @@
 
             <!-- 主内容区 -->
             <div class="col-md-10 p-4">
-                <h2 class="mb-4">📦 VIP卡组管理</h2>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>📦 VIP卡组管理</h2>
+                    <a href="${pageContext.request.contextPath}/admin/market/create" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> 创建VIP卡组
+                    </a>
+                </div>
 
                 <div class="card">
                     <div class="card-body">
@@ -126,6 +131,10 @@
                                                         </button>
                                                     </c:otherwise>
                                                 </c:choose>
+                                                <a href="${pageContext.request.contextPath}/admin/market/edit/${deck.id}" 
+                                                   class="btn btn-sm btn-outline-primary ms-2">
+                                                    <i class="bi bi-pencil"></i> 编辑
+                                                </a>
                                             </td>
                                         </tr>
                                     </c:forEach>

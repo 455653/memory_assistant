@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.memoryassistant.mapper.MarketCardMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.memoryassistant.entity.MarketCard">
+        <id property="id" column="id"/>
+        <result property="marketDeckId" column="market_deck_id"/>
+        <result property="question" column="question"/>
+        <result property="answer" column="answer"/>
+        <result property="difficultyLevel" column="difficulty_level"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <!-- 批量插入卡片 -->
+    <insert id="batchInsert">
+        INSERT INTO sys_market_card (market_deck_id, question, answer, difficulty_level, status)
+        VALUES
+        <foreach collection="cards" item="card" separator=",">
+            (#{card.marketDeckId}, #{card.question}, #{card.answer}, 
+             #{card.difficultyLevel, jdbcType=INTEGER}, 1)
+        </foreach>
+    </insert>
+
+    <!-- 根据卡组ID查询卡片列表 -->
+    <select id="selectByDeckId" resultMap="BaseResultMap">
+        SELECT * FROM sys_market_card
+        WHERE market_deck_id = #{marketDeckId}
+        ORDER BY create_time ASC
+    </select>
+
+    <!-- 根据ID查询卡片 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM sys_market_card WHERE id = #{id}
+    </select>
+
+    <!-- 更新卡片 -->
+    <update id="update">
+        UPDATE sys_market_card
+        SET question = #{question},
+            answer = #{answer},
+            difficulty_level = #{difficultyLevel}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除卡片 -->
+    <delete id="deleteById">
+        DELETE FROM sys_market_card WHERE id = #{id}
+    </delete>
+
+    <!-- 统计卡片数量 -->
+    <select id="countByDeckId" resultType="int">
+        SELECT COUNT(*) FROM sys_market_card
+        WHERE market_deck_id = #{marketDeckId}
+    </select>
+
+</mapper>

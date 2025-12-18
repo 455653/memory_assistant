@@ -58,5 +58,27 @@
     <update id="updateStatus">
         UPDATE sys_market_deck SET status = #{status} WHERE id = #{id}
     </update>
+    
+    <!-- 插入卡组 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_market_deck (deck_name, description, category, price, cover_url, card_count, status)
+        VALUES (#{deckName}, #{description}, #{category}, #{price}, #{coverUrl}, #{cardCount}, #{status})
+    </insert>
+    
+    <!-- 更新卡组 -->
+    <update id="update">
+        UPDATE sys_market_deck
+        SET deck_name = #{deckName},
+            description = #{description},
+            category = #{category},
+            price = #{price},
+            cover_url = #{coverUrl}
+        WHERE id = #{id}
+    </update>
+    
+    <!-- 更新卡组的卡片数量 -->
+    <update id="updateCardCount">
+        UPDATE sys_market_deck SET card_count = #{cardCount} WHERE id = #{id}
+    </update>
 
 </mapper>

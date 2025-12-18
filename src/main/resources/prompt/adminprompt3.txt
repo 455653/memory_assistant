@@ -1,0 +1,255 @@
+# Role
+你是一名精通 Java Spring Boot 3.x, MyBatis 和 JSP 的全栈架构师。
+我正在开发 "Memory-Assistant" 项目的管理员后台，目前数据库中已有 `sys_market_deck` (VIP卡组) 和 `sys_market_card` (VIP卡片) 表。
+我需要你帮我实现 **管理员上架与管理 VIP 卡组** 的功能。
+
+# Context (项目背景)
+1.  **现有功能**: 普通用户已经可以通过上传 Excel/CSV 批量导入卡片到自己的 `flashcard` 表中（逻辑在 `CardService` 或 `DocumentParserService` 中）。
+2.  **目标**: 管理员在后台 (`/admin/market`) 创建或编辑 VIP 卡组时，也需要支持文件上传，并将解析出的数据存入 `sys_market_card` 表。
+
+# Requirements (需求详情)
+
+请分步骤为我生成以下代码：
+
+## Step 1: 后端 - 文件解析逻辑复用 (Service)
+请检查现有的文件解析逻辑（假设在 `CardService` 或 `DocumentParserService` 中）。
+我们需要将其适配，使其能返回通用的数据结构（如 `List<ImportCardDTO>`），或者重载方法以支持 `MarketCard`。
+-   **Service**: 修改或扩展 `MarketService.java`。
+-   **方法**: `createMarketDeck(String name, String desc, BigDecimal price, MultipartFile file)`。
+-   **逻辑**:
+    1.  插入 `sys_market_deck` 获取 ID。
+    2.  调用文件解析工具读取 CSV/XLSX。
+    3.  将解析结果转换为 `MarketCard` 对象（注意：设置 `market_deck_id`，默认 `status=1`）。
+    4.  批量插入到 `sys_market_card` 表。
+
+## Step 2: 后端 - 卡组与卡片管理 (CRUD)
+-   **Mapper**: 完善 `MarketMapper` 和 `MarketCardMapper` (如果不存在请创建)。
+    -   `MarketMapper`: `insert`, `update`, `selectById`。
+    -   `MarketCardMapper`: `batchInsert`, `selectByDeckId`, `update`, `delete`。
+-   **Controller**: 更新 `AdminController` 或新建 `AdminMarketController`。
+    -   `GET /admin/market/create`: 跳转到新建页面。
+    -   `POST /admin/market/create`: 处理表单提交（含文件上传）。
+    -   `GET /admin/market/edit/{id}`: 跳转到编辑页面（展示卡组信息和下属卡片列表）。
+    -   `POST /admin/market/update`: 更新卡组基础信息。
+    -   `POST /admin/market/card/update`: AJAX 更新单张 VIP 卡片的内容（问题/答案）。
+    -   `POST /admin/market/card/delete`: AJAX 删除单张 VIP 卡片。
+
+## Step 3: 前端 - 新建/编辑页面 (JSP)
+请提供 `src/main/webapp/WEB-INF/jsp/admin/market_form.jsp` 的代码。
+该页面需兼顾“新建”和“编辑”两种状态：
+1.  **表单区域**:
+    -   卡组名称 (Input)
+    -   分类 (Select/Input)
+    -   价格 (Input Step=0.01)
+    -   描述 (Textarea)
+    -   **封面图** (File Input, 可选)
+    -   **卡片导入** (File Input, accept .csv, .xlsx): 仅在“新建”时必填，编辑时作为“追加导入”或“覆盖”的可选项（简化起见，目前仅在新建时强制要求，或编辑时作为追加）。
+2.  **卡片管理区域 (仅在编辑模式下显示)**:
+    -   展示该卡组下现有的所有卡片列表 (Table)。
+    -   每行提供“编辑”和“删除”按钮。
+    -   点击“编辑”弹窗修改 `question` 和 `answer`。
+
+# Technical Constraints
+-   **复用代码**: 必须复用现有的 Excel/CSV 解析逻辑，不要重写一套解析器。
+-   **事务管理**: 在 `createMarketDeck` 中使用 `@Transactional`，防止卡组创建了但卡片插入失败。
+-   **UI风格**: 使用 Bootstrap 5。
+
+# Output Expected
+1.  `MarketCard` 实体类代码。
+2.  `MarketCardMapper.xml` 的关键 SQL。
+3.  `MarketService` 中处理文件导入和保存的逻辑。
+4.  `AdminMarketController` 的关键方法。
+5.  `market_form.jsp` 的完整代码。
+
+
+以下是mysql数据库的完整代码：
+create table sys_market_deck
+(
+    id          bigint auto_increment comment '商品卡组ID'
+        primary key,
+    deck_name   varchar(100)                             not null comment '卡组名称',
+    description text                                     null comment '卡组描述',
+    category    varchar(50)                              null comment '卡组分类',
+    price       decimal(10, 2) default 0.00              not null comment '价格（元）',
+    cover_url   varchar(255)                             null comment '封面图URL',
+    card_count  int            default 0                 null comment '卡片数量',
+    create_time datetime       default CURRENT_TIMESTAMP null comment '创建时间',
+    update_time datetime       default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
+    status      tinyint        default 1                 null comment '状态: 0-下架, 1-上架'
+)
+    comment 'VIP商店卡组表' charset = utf8mb4;
+
+create table sys_market_card
+(
+    id               bigint auto_increment comment '商品卡片ID'
+        primary key,
+    market_deck_id   bigint                             not null comment '所属商店卡组ID',
+    question         text                               not null comment '问题/正面',
+    answer           text                               not null comment '答案/背面',
+    difficulty_level int      default 1                 null comment '难度等级: 1-简单, 2-中等, 3-困难',
+    create_time      datetime default CURRENT_TIMESTAMP null comment '创建时间',
+    update_time      datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
+    status           tinyint  default 1                 null comment '状态: 0-禁用, 1-启用',
+    constraint fk_market_card_deck
+        foreign key (market_deck_id) references sys_market_deck (id)
+            on delete cascade
+)
+    comment 'VIP商店卡片表' charset = utf8mb4;
+
+create index idx_market_deck_id
+    on sys_market_card (market_deck_id);
+
+create table sys_user
+(
+    id          bigint auto_increment comment '用户ID'
+        primary key,
+    username    varchar(50)                           not null comment '用户名',
+    password    varchar(100)                          not null comment '密码',
+    email       varchar(100)                          null comment '邮箱',
+    nickname    varchar(50)                           null comment '昵称',
+    avatar_url  varchar(255)                          null comment '头像URL',
+    create_time datetime    default CURRENT_TIMESTAMP null comment '创建时间',
+    update_time datetime    default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
+    status      tinyint     default 1                 null comment '状态: 0-禁用, 1-启用',
+    role        varchar(20) default 'USER'            not null comment '角色: USER-普通用户, ADMIN-管理员',
+    constraint username
+        unique (username)
+)
+    comment '用户表' charset = utf8mb4;
+
+create table flashcard_deck
+(
+    id               bigint auto_increment comment '卡组ID'
+        primary key,
+    user_id          bigint                             not null comment '所属用户ID',
+    deck_name        varchar(100)                       not null comment '卡组名称',
+    description      text                               null comment '卡组描述',
+    category         varchar(50)                        null comment '卡组分类',
+    card_count       int      default 0                 null comment '卡片数量',
+    create_time      datetime default CURRENT_TIMESTAMP null comment '创建时间',
+    update_time      datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
+    status           tinyint  default 1                 null comment '状态: 0-删除, 1-正常',
+    source_market_id bigint                             null comment '购买源ID: NULL-用户自建, 其他-从商店购买的对应sys_market_deck.id',
+    constraint flashcard_deck_ibfk_1
+        foreign key (user_id) references sys_user (id)
+            on delete cascade
+)
+    comment '卡组表' charset = utf8mb4;
+
+create table flashcard
+(
+    id               bigint auto_increment comment '卡片ID'
+        primary key,
+    deck_id          bigint                                  not null comment '所属卡组ID',
+    question         text                                    not null comment '问题/正面',
+    answer           text                                    not null comment '答案/背面',
+    next_review_date date                                    not null comment '下次复习日期',
+    stage            int           default 0                 null comment '记忆阶段: 0-新卡片, 1-第1次复习, 2-第2次复习... 7-已完成',
+    review_count     int           default 0                 null comment '复习次数',
+    correct_count    int           default 0                 null comment '正确次数',
+    wrong_count      int           default 0                 null comment '错误次数',
+    difficulty       decimal(3, 2) default 1.00              null comment '难度系数: 0.50-2.00',
+    create_time      datetime      default CURRENT_TIMESTAMP null comment '创建时间',
+    update_time      datetime      default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
+    status           tinyint       default 1                 null comment '状态: 0-归档, 1-学习中, 2-已掌握',
+    constraint flashcard_ibfk_1
+        foreign key (deck_id) references flashcard_deck (id)
+            on delete cascade
+)
+    comment '闪卡表' charset = utf8mb4;
+
+create index idx_deck_status
+    on flashcard (deck_id, status);
+
+create index idx_next_review
+    on flashcard (next_review_date, status);
+
+create index idx_user_market
+    on flashcard_deck (user_id, source_market_id);
+
+create table review_log
+(
+    id                   bigint auto_increment comment '记录ID'
+        primary key,
+    card_id              bigint                             not null comment '卡片ID',
+    user_id              bigint                             not null comment '用户ID',
+    review_date          datetime default CURRENT_TIMESTAMP null comment '复习时间',
+    is_correct           tinyint                            not null comment '是否记得: 0-忘了, 1-记得',
+    old_stage            int                                null comment '复习前阶段',
+    new_stage            int                                null comment '复习后阶段',
+    old_next_review_date date                               null comment '复习前下次复习日期',
+    new_next_review_date date                               null comment '复习后下次复习日期',
+    response_time        int                                null comment '响应时间(秒)',
+    constraint review_log_ibfk_1
+        foreign key (card_id) references flashcard (id)
+            on delete cascade,
+    constraint review_log_ibfk_2
+        foreign key (user_id) references sys_user (id)
+            on delete cascade
+)
+    comment '复习记录表' charset = utf8mb4;
+
+create index idx_card_date
+    on review_log (card_id, review_date);
+
+create index user_id
+    on review_log (user_id);
+
+create table sys_market_comment
+(
+    id             bigint auto_increment comment '评论ID'
+        primary key,
+    market_deck_id bigint                             not null comment '所属商店卡组ID',
+    user_id        bigint                             not null comment '评论用户ID',
+    content        text                               not null comment '评论内容',
+    rating         tinyint  default 5                 null comment '评分: 1-5星',
+    create_time    datetime default CURRENT_TIMESTAMP null comment '创建时间',
+    constraint fk_comment_market_deck
+        foreign key (market_deck_id) references sys_market_deck (id)
+            on delete cascade,
+    constraint fk_comment_user
+        foreign key (user_id) references sys_user (id)
+            on delete cascade
+)
+    comment 'VIP商店评论表' charset = utf8mb4;
+
+create index idx_create_time
+    on sys_market_comment (create_time desc);
+
+create index idx_market_deck_id
+    on sys_market_comment (market_deck_id);
+
+create index idx_user_id
+    on sys_market_comment (user_id);
+
+create table sys_market_feedback
+(
+    id             bigint auto_increment comment '反馈ID'
+        primary key,
+    market_deck_id bigint                             not null comment '所属商店卡组ID',
+    user_id        bigint                             not null comment '提交反馈的用户ID',
+    content        text                               not null comment '反馈内容',
+    contact_info   varchar(100)                       null comment '联系方式（选填）',
+    status         tinyint  default 0                 not null comment '处理状态: 0-待处理, 1-已采纳, 2-忽略',
+    create_time    datetime default CURRENT_TIMESTAMP null comment '提交时间',
+    constraint fk_feedback_market_deck
+        foreign key (market_deck_id) references sys_market_deck (id)
+            on delete cascade,
+    constraint fk_feedback_user
+        foreign key (user_id) references sys_user (id)
+            on delete cascade
+)
+    comment 'VIP商店反馈表' charset = utf8mb4;
+
+create index idx_create_time
+    on sys_market_feedback (create_time desc);
+
+create index idx_market_deck_id
+    on sys_market_feedback (market_deck_id);
+
+create index idx_status
+    on sys_market_feedback (status);
+
+create index idx_user_id
+    on sys_market_feedback (user_id);
+
