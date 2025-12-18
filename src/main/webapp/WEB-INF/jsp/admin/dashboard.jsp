@@ -35,6 +35,10 @@
             margin-bottom: 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             transition: all 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
         }
         .stat-card:hover {
             transform: translateY(-5px);
@@ -61,6 +65,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/admin/users">
+                            <i class="bi bi-people"></i> 用户管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="${pageContext.request.contextPath}/admin/market">
                             <i class="bi bi-box-seam"></i> VIP卡组管理
                         </a>
@@ -70,9 +79,9 @@
                             <i class="bi bi-chat-dots"></i> 反馈管理
                         </a>
                     </li>
-                    <li class="nav-item mt-4">
-                        <a class="nav-link" href="${pageContext.request.contextPath}/dashboard">
-                            <i class="bi bi-arrow-left-circle"></i> 返回用户端
+                    <li class="nav-item">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/admin/sales">
+                            <i class="bi bi-cash-stack"></i> 销售记录
                         </a>
                     </li>
                 </ul>
@@ -85,7 +94,7 @@
                 <div class="row">
                     <!-- 用户总数 -->
                     <div class="col-md-3">
-                        <div class="stat-card bg-primary text-white">
+                        <a href="${pageContext.request.contextPath}/admin/users" class="stat-card bg-primary text-white">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="mb-2">用户总数</h6>
@@ -93,12 +102,12 @@
                                 </div>
                                 <i class="bi bi-people stat-icon"></i>
                             </div>
-                        </div>
+                        </a>
                     </div>
 
                     <!-- VIP卡组数 -->
                     <div class="col-md-3">
-                        <div class="stat-card bg-success text-white">
+                        <a href="${pageContext.request.contextPath}/admin/market" class="stat-card bg-success text-white">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="mb-2">VIP卡组数</h6>
@@ -106,12 +115,12 @@
                                 </div>
                                 <i class="bi bi-box-seam stat-icon"></i>
                             </div>
-                        </div>
+                        </a>
                     </div>
 
                     <!-- 待处理反馈 -->
                     <div class="col-md-3">
-                        <div class="stat-card bg-warning text-white">
+                        <a href="${pageContext.request.contextPath}/admin/feedback" class="stat-card bg-warning text-white">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="mb-2">待处理反馈</h6>
@@ -119,12 +128,12 @@
                                 </div>
                                 <i class="bi bi-chat-dots stat-icon"></i>
                             </div>
-                        </div>
+                        </a>
                     </div>
 
                     <!-- 总销量 -->
                     <div class="col-md-3">
-                        <div class="stat-card bg-info text-white">
+                        <a href="${pageContext.request.contextPath}/admin/sales" class="stat-card bg-info text-white">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="mb-2">总销量</h6>
@@ -132,28 +141,10 @@
                                 </div>
                                 <i class="bi bi-cart-check stat-icon"></i>
                             </div>
-                        </div>
+                        </a>
                     </div>
                 </div>
 
-                <!-- 快捷操作 -->
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">快捷操作</h5>
-                                <div class="btn-group" role="group">
-                                    <a href="${pageContext.request.contextPath}/admin/market" class="btn btn-outline-primary">
-                                        <i class="bi bi-box-seam"></i> 管理VIP卡组
-                                    </a>
-                                    <a href="${pageContext.request.contextPath}/admin/feedback" class="btn btn-outline-warning">
-                                        <i class="bi bi-chat-dots"></i> 处理反馈
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>

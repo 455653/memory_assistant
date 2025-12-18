@@ -1,5 +1,6 @@
 package com.example.memoryassistant.mapper;
 
+import com.example.memoryassistant.dto.SalesRecordDTO;
 import com.example.memoryassistant.entity.FlashcardDeck;
 import org.apache.ibatis.annotations.Param;
 
@@ -52,4 +53,9 @@ public interface FlashcardDeckMapper {
      * 统计所有购买的卡组数量（销量）
      */
     int countPurchasedDecks();
+    
+    /**
+     * 查询所有销售记录
+     */
+    List<SalesRecordDTO> selectAllSalesRecords();
 }

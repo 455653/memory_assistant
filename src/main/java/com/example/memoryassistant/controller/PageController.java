@@ -148,6 +148,12 @@ public class PageController {
         if (userId == null) {
             return "redirect:/login";
         }
+        
+        // 如果是管理员，重定向到管理员后台
+        SysUser loginUser = (SysUser) session.getAttribute("loginUser");
+        if (loginUser != null && "ADMIN".equals(loginUser.getRole())) {
+            return "redirect:/admin/dashboard";
+        }
 
         // 获取今日需要复习的卡片
         List<Flashcard> dueCards = reviewService.getDueCards(userId);
@@ -169,6 +175,12 @@ public class PageController {
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
             return "redirect:/login";
+        }
+        
+        // 如果是管理员，重定向到管理员后台
+        SysUser loginUser = (SysUser) session.getAttribute("loginUser");
+        if (loginUser != null && "ADMIN".equals(loginUser.getRole())) {
+            return "redirect:/admin/dashboard";
         }
 
         // 从 Session 中获取用户选择的卡组ID
@@ -203,6 +215,12 @@ public class PageController {
         if (userId == null) {
             return "redirect:/login";
         }
+        
+        // 如果是管理员，重定向到管理员后台
+        SysUser loginUser = (SysUser) session.getAttribute("loginUser");
+        if (loginUser != null && "ADMIN".equals(loginUser.getRole())) {
+            return "redirect:/admin/dashboard";
+        }
 
         // 将用户选择的卡组ID存入 Session
         session.setAttribute("selectedDeckIds", deckIds);
@@ -219,6 +237,12 @@ public class PageController {
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
             return "redirect:/login";
+        }
+        
+        // 如果是管理员，重定向到管理员后台
+        SysUser loginUser = (SysUser) session.getAttribute("loginUser");
+        if (loginUser != null && "ADMIN".equals(loginUser.getRole())) {
+            return "redirect:/admin/dashboard";
         }
 
         List<FlashcardDeck> decks = deckService.getUserDecks(userId);

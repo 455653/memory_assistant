@@ -1,7 +1,9 @@
 package com.example.memoryassistant.controller;
 
 import com.example.memoryassistant.dto.FeedbackDetailDTO;
+import com.example.memoryassistant.dto.SalesRecordDTO;
 import com.example.memoryassistant.entity.MarketDeck;
+import com.example.memoryassistant.entity.SysUser;
 import com.example.memoryassistant.mapper.*;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
@@ -9,6 +11,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -115,5 +118,32 @@ public class AdminController {
             result.put("message", "操作失败：" + e.getMessage());
         }
         return result;
+    }
+    
+    /**
+     * 用户列表
+     */
+    @GetMapping("/users")
+    public String userList(Model model) {
+        List<SysUser> users = userMapper.selectAll();
+        model.addAttribute("users", users);
+        return "admin/user_list";
+    }
+    
+    /**
+     * 销售记录列表
+     */
+    @GetMapping("/sales")
+    public String salesList(Model model) {
+        List<SalesRecordDTO> salesRecords = deckMapper.selectAllSalesRecords();
+        
+        // 计算总销售额
+        BigDecimal totalRevenue = salesRecords.stream()
+                .map(SalesRecordDTO::getPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        model.addAttribute("salesRecords", salesRecords);
+        model.addAttribute("totalRevenue", totalRevenue);
+        return "admin/sales_list";
     }
 }

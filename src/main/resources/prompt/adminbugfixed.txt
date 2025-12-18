@@ -1,0 +1,37 @@
+# Role
+你是一名精通 Java Spring Boot 3.x, MyBatis 和 JSP 的全栈开发专家。
+我正在维护 "Memory-Assistant" 项目，目前已经区分了 `USER` 和 `ADMIN` 两种角色。
+
+# Goal (目标)
+我需要修改 **登录后的跳转逻辑** 和 **管理员后台界面**，以实现彻底的角色隔离。
+**核心需求**：
+1.  **登录分流**：管理员登录成功后，**直接**跳转到管理员后台 (`/admin/dashboard`)，普通用户跳转到用户首页 (`/dashboard` 或 `/decks`)。
+2.  **移除“返回前台”入口**：在管理员后台界面中，移除所有指向用户功能（如“返回客户端”、“去复习”）的按钮或链接。管理员不需要也不应该使用背单词功能。
+
+# Task Breakdown (具体任务)
+
+请为我生成修改以下文件所需的代码或步骤：
+
+## Step 1: 修改登录跳转逻辑 (Backend)
+请检查 `PageController.java` (或处理登录 POST 请求的 Controller)。
+-   找到处理登录表单提交的方法 (通常是 `@PostMapping("/login")`)。
+-   **修改重定向逻辑**:
+    -   登录成功后，判断当前 Session 中用户的 `role` 字段。
+    -   If `role == "ADMIN"` -> `return "redirect:/admin/dashboard";`
+    -   If `role == "USER"` -> `return "redirect:/dashboard";` (保持原样)
+
+## Step 2: 清理管理员后台界面 (Frontend)
+请修改 `src/main/webapp/WEB-INF/jsp/admin/dashboard.jsp` (以及可能的侧边栏文件)。
+-   **删除/注释掉**任何指向用户端页面的链接，例如：
+    -   `<a href="/dashboard">返回客户端</a>`
+    -   `<a href="/decks">我的卡组</a>`
+-   确保管理员只能看到：仪表盘、用户管理、VIP卡组管理、反馈处理、销售统计等管理类菜单。
+
+## Step 3: (可选) 拦截器增强
+-   确认 `AdminInterceptor` 是否已经能够拦截非管理员访问 `/admin/**`。
+-   (进阶) 如果你想做得更绝，可以在 `PageController` 的用户端接口（如 `/decks`, `/review`）中添加判断：如果当前是 ADMIN 登录，直接重定向回 `/admin/dashboard`，防止管理员通过 URL 手动访问用户页面。
+
+# Output Constraints
+1.  请提供 `PageController.java` 中登录方法的修改代码片段。
+2.  请提供 `admin/dashboard.jsp` 中需要删除/修改的 HTML 代码片段（指出要删哪一部分）。
+3.  保持代码风格简洁。

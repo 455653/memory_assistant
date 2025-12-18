@@ -66,5 +66,30 @@
         FROM flashcard_deck
         WHERE source_market_id IS NOT NULL AND status = 1
     </select>
+    
+    <!-- 销售记录查询 -->
+    <resultMap id="SalesRecordResultMap" type="com.example.memoryassistant.dto.SalesRecordDTO">
+        <result property="purchaseId" column="purchase_id"/>
+        <result property="username" column="username"/>
+        <result property="nickname" column="nickname"/>
+        <result property="deckName" column="deck_name"/>
+        <result property="price" column="price"/>
+        <result property="purchaseTime" column="purchase_time"/>
+    </resultMap>
+    
+    <select id="selectAllSalesRecords" resultMap="SalesRecordResultMap">
+        SELECT 
+            fd.id AS purchase_id,
+            u.username,
+            u.nickname,
+            md.deck_name,
+            md.price,
+            fd.create_time AS purchase_time
+        FROM flashcard_deck fd
+        INNER JOIN sys_user u ON fd.user_id = u.id
+        INNER JOIN sys_market_deck md ON fd.source_market_id = md.id
+        WHERE fd.source_market_id IS NOT NULL
+        ORDER BY fd.create_time DESC
+    </select>
 
 </mapper>

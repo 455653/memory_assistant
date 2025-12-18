@@ -1,6 +1,7 @@
 package com.example.memoryassistant.mapper;
 
 import com.example.memoryassistant.entity.SysUser;
+import java.util.List;
 
 /**
  * 用户 Mapper 接口
@@ -31,4 +32,9 @@ public interface SysUserMapper {
      * 统计用户总数
      */
     int countAll();
+    
+    /**
+     * 查询所有用户
+     */
+    List<SysUser> selectAll();
 }

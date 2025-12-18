@@ -2,6 +2,7 @@ package com.example.memoryassistant.controller;
 
 import com.example.memoryassistant.dto.MarketCommentDTO;
 import com.example.memoryassistant.entity.MarketDeck;
+import com.example.memoryassistant.entity.SysUser;
 import com.example.memoryassistant.service.MarketService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
@@ -37,6 +38,12 @@ public class MarketController {
         if (userId == null) {
             return "redirect:/login";
         }
+        
+        // 如果是管理员，重定向到管理员后台
+        SysUser loginUser = (SysUser) session.getAttribute("loginUser");
+        if (loginUser != null && "ADMIN".equals(loginUser.getRole())) {
+            return "redirect:/admin/dashboard";
+        }
 
         // 获取所有上架的VIP卡组
         List<MarketDeck> marketDecks = marketService.getAllMarketDecks();
@@ -56,6 +63,12 @@ public class MarketController {
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
             return "redirect:/login";
+        }
+        
+        // 如果是管理员，重定向到管理员后台
+        SysUser loginUser = (SysUser) session.getAttribute("loginUser");
+        if (loginUser != null && "ADMIN".equals(loginUser.getRole())) {
+            return "redirect:/admin/dashboard";
         }
 
         // 获取卡组详情

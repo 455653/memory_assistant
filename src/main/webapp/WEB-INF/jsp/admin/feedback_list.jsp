@@ -48,6 +48,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/admin/users">
+                            <i class="bi bi-people"></i> 用户管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="${pageContext.request.contextPath}/admin/market">
                             <i class="bi bi-box-seam"></i> VIP卡组管理
                         </a>
@@ -57,9 +62,9 @@
                             <i class="bi bi-chat-dots"></i> 反馈管理
                         </a>
                     </li>
-                    <li class="nav-item mt-4">
-                        <a class="nav-link" href="${pageContext.request.contextPath}/dashboard">
-                            <i class="bi bi-arrow-left-circle"></i> 返回用户端
+                    <li class="nav-item">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/admin/sales">
+                            <i class="bi bi-cash-stack"></i> 销售记录
                         </a>
                     </li>
                 </ul>
