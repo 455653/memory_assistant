@@ -126,6 +126,9 @@
                         <button class="btn btn-success btn-lg" disabled>
                             <i class="bi bi-check-circle"></i> 已购买
                         </button>
+                        <button class="btn btn-warning btn-lg ms-2" data-bs-toggle="modal" data-bs-target="#feedbackModal">
+                            <i class="bi bi-pencil-square"></i> 内容纠错/反馈
+                        </button>
                     </c:if>
                 </div>
             </div>
@@ -259,6 +262,69 @@
             </div>
         </div>
     </div>
+
+    <!-- 反馈模态框 -->
+    <c:if test="${hasPurchased}">
+        <div class="modal fade" id="feedbackModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-pencil-square"></i> 内容纠错/反馈
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form action="${pageContext.request.contextPath}/market/feedback" method="post">
+                        <input type="hidden" name="marketDeckId" value="${deck.id}">
+                        
+                        <div class="modal-body">
+                            <!-- 卡组名称 -->
+                            <div class="mb-3">
+                                <label class="form-label">卡组名称</label>
+                                <input type="text" class="form-control" value="${deck.deckName}" readonly>
+                            </div>
+
+                            <!-- 反馈内容 -->
+                            <div class="mb-3">
+                                <label for="feedbackContent" class="form-label">反馈内容 *</label>
+                                <textarea class="form-control" 
+                                          id="feedbackContent" 
+                                          name="content" 
+                                          rows="5" 
+                                          required 
+                                          maxlength="1000"
+                                          placeholder="请描述您发现的问题或建议，例如：\n- 卡片内容有误\n- 答案不严谨\n- 排版错误\n- 其他建议"></textarea>
+                                <div class="form-text">最多1000字</div>
+                            </div>
+
+                            <!-- 联系方式 -->
+                            <div class="mb-3">
+                                <label for="contactInfo" class="form-label">联系方式（选填）</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="contactInfo" 
+                                       name="contactInfo" 
+                                       maxlength="100"
+                                       placeholder="邮箱或微信，方便我们联系您">
+                            </div>
+
+                            <div class="alert alert-info mb-0">
+                                <i class="bi bi-info-circle"></i>
+                                您的反馈将帮助我们改进卡组质量，感谢您的支持！
+                            </div>
+                        </div>
+                        
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send"></i> 提交反馈
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </c:if>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>

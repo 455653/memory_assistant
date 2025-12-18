@@ -6,9 +6,11 @@ import com.example.memoryassistant.entity.FlashcardDeck;
 import com.example.memoryassistant.entity.MarketCard;
 import com.example.memoryassistant.entity.MarketComment;
 import com.example.memoryassistant.entity.MarketDeck;
+import com.example.memoryassistant.entity.MarketFeedback;
 import com.example.memoryassistant.mapper.FlashcardDeckMapper;
 import com.example.memoryassistant.mapper.FlashcardMapper;
 import com.example.memoryassistant.mapper.MarketCommentMapper;
+import com.example.memoryassistant.mapper.MarketFeedbackMapper;
 import com.example.memoryassistant.mapper.MarketMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,15 +30,18 @@ public class MarketService {
     private final FlashcardDeckMapper deckMapper;
     private final FlashcardMapper flashcardMapper;
     private final MarketCommentMapper commentMapper;
+    private final MarketFeedbackMapper feedbackMapper;
 
     public MarketService(MarketMapper marketMapper, 
                         FlashcardDeckMapper deckMapper, 
                         FlashcardMapper flashcardMapper,
-                        MarketCommentMapper commentMapper) {
+                        MarketCommentMapper commentMapper,
+                        MarketFeedbackMapper feedbackMapper) {
         this.marketMapper = marketMapper;
         this.deckMapper = deckMapper;
         this.flashcardMapper = flashcardMapper;
         this.commentMapper = commentMapper;
+        this.feedbackMapper = feedbackMapper;
     }
 
     /**
@@ -180,5 +185,38 @@ public class MarketService {
     public boolean hasPurchased(Long userId, Long marketDeckId) {
         int count = deckMapper.countByUserIdAndMarketId(userId, marketDeckId);
         return count > 0;
+    }
+
+    /**
+     * 提交VIP卡组反馈（仅购买用户可提交）
+     * 
+     * @param userId 用户ID
+     * @param marketDeckId 商店卡组ID
+     * @param content 反馈内容
+     * @param contactInfo 联系方式（可选）
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void submitFeedback(Long userId, Long marketDeckId, String content, String contactInfo) {
+        // 核心安全校验：检查用户是否购买过该卡组
+        int purchaseCount = deckMapper.countByUserIdAndMarketId(userId, marketDeckId);
+        if (purchaseCount == 0) {
+            throw new IllegalArgumentException("您必须购买该卡组后才能提交反馈");
+        }
+        
+        // 验证反馈内容
+        if (content == null || content.trim().isEmpty()) {
+            throw new IllegalArgumentException("反馈内容不能为空");
+        }
+        
+        // 创建反馈对象
+        MarketFeedback feedback = new MarketFeedback();
+        feedback.setMarketDeckId(marketDeckId);
+        feedback.setUserId(userId);
+        feedback.setContent(content.trim());
+        feedback.setContactInfo(contactInfo != null ? contactInfo.trim() : null);
+        feedback.setStatus(0); // 默认待处理
+        
+        // 插入反馈
+        feedbackMapper.insert(feedback);
     }
 }

@@ -139,4 +139,34 @@ public class MarketController {
             return "redirect:/market/deck/" + marketDeckId;
         }
     }
+
+    /**
+     * 提交反馈
+     */
+    @PostMapping("/feedback")
+    public String submitFeedback(@RequestParam Long marketDeckId,
+                                 @RequestParam String content,
+                                 @RequestParam(required = false) String contactInfo,
+                                 HttpSession session,
+                                 RedirectAttributes redirectAttributes) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        try {
+            // 提交反馈（内部会校验购买权限）
+            marketService.submitFeedback(userId, marketDeckId, content, contactInfo);
+            
+            redirectAttributes.addFlashAttribute("success", "反馈提交成功，感谢您的建议！");
+            return "redirect:/market/deck/" + marketDeckId;
+        } catch (IllegalArgumentException e) {
+            // 权限不足或参数错误
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/market/deck/" + marketDeckId;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "反馈提交失败，请稍后重试");
+            return "redirect:/market/deck/" + marketDeckId;
+        }
+    }
 }
