@@ -18,18 +18,24 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * VIP商店服务
@@ -43,6 +49,9 @@ public class MarketService {
     private final MarketCommentMapper commentMapper;
     private final MarketFeedbackMapper feedbackMapper;
     private final MarketCardMapper marketCardMapper;
+    
+    @Value("${file.upload.path}")
+    private String uploadPath;
 
     public MarketService(MarketMapper marketMapper, 
                         FlashcardDeckMapper deckMapper, 
@@ -242,11 +251,12 @@ public class MarketService {
      * @param category 分类
      * @param price 价格
      * @param file 导入文件 (CSV/XLSX)
+     * @param coverFile 封面图片文件
      * @return 创建的卡组ID
      */
     @Transactional(rollbackFor = Exception.class)
     public Long createMarketDeck(String deckName, String description, String category, 
-                                 BigDecimal price, MultipartFile file) throws IOException {
+                                 BigDecimal price, MultipartFile file, MultipartFile coverFile) throws IOException {
         // 1. 创建VIP卡组
         MarketDeck deck = new MarketDeck();
         deck.setDeckName(deckName);
@@ -255,6 +265,12 @@ public class MarketService {
         deck.setPrice(price);
         deck.setCardCount(0);
         deck.setStatus(1); // 默认上架
+        
+        // 处理封面图片上传
+        if (coverFile != null && !coverFile.isEmpty()) {
+            String coverUrl = saveImageFile(coverFile);
+            deck.setCoverUrl(coverUrl);
+        }
         
         marketMapper.insert(deck);
         Long deckId = deck.getId();
@@ -277,13 +293,20 @@ public class MarketService {
      */
     @Transactional(rollbackFor = Exception.class)
     public void updateMarketDeck(Long id, String deckName, String description, 
-                                 String category, BigDecimal price) {
+                                 String category, BigDecimal price, MultipartFile coverFile) throws IOException {
         MarketDeck deck = new MarketDeck();
         deck.setId(id);
         deck.setDeckName(deckName);
         deck.setDescription(description);
         deck.setCategory(category);
         deck.setPrice(price);
+        
+        // 处理封面图片上传（只在上传了新图时才更新）
+        if (coverFile != null && !coverFile.isEmpty()) {
+            String coverUrl = saveImageFile(coverFile);
+            deck.setCoverUrl(coverUrl);
+        }
+        // 注意：如果 coverFile 为空，不设置 coverUrl，Mapper 会保持原有值不变
         
         marketMapper.update(deck);
     }
@@ -453,5 +476,54 @@ public class MarketService {
             case FORMULA -> cell.getCellFormula();
             default -> "";
         };
+    }
+    
+    /**
+     * 保存图片文件到服务器
+     * 
+     * @param imageFile 图片文件
+     * @return 访问 URL (相对路径)
+     */
+    private String saveImageFile(MultipartFile imageFile) throws IOException {
+        // 1. 校验文件
+        if (imageFile == null || imageFile.isEmpty()) {
+            throw new IllegalArgumentException("图片文件不能为空");
+        }
+        
+        // 2. 校验文件类型
+        String originalFilename = imageFile.getOriginalFilename();
+        if (originalFilename == null || !isImageFile(originalFilename)) {
+            throw new IllegalArgumentException("只支持图片格式（JPG, PNG, GIF, WEBP）");
+        }
+        
+        // 3. 生成唯一文件名（UUID + 原始扩展名）
+        String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        String uniqueFilename = UUID.randomUUID().toString() + fileExtension;
+        
+        // 4. 确保目录存在
+        File uploadDir = new File(uploadPath);
+        if (!uploadDir.exists()) {
+            uploadDir.mkdirs();
+        }
+        
+        // 5. 保存文件
+        Path filePath = Paths.get(uploadPath, uniqueFilename);
+        Files.copy(imageFile.getInputStream(), filePath);
+        
+        // 6. 返回访问 URL（相对路径）
+        return "/uploads/covers/" + uniqueFilename;
+    }
+    
+    /**
+     * 判断是否为图片文件
+     */
+    private boolean isImageFile(String filename) {
+        if (filename == null) return false;
+        String lowerFilename = filename.toLowerCase();
+        return lowerFilename.endsWith(".jpg") 
+            || lowerFilename.endsWith(".jpeg") 
+            || lowerFilename.endsWith(".png") 
+            || lowerFilename.endsWith(".gif")
+            || lowerFilename.endsWith(".webp");
     }
 }

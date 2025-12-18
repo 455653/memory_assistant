@@ -189,9 +189,10 @@ public class AdminController {
                                    @RequestParam(required = false) String category,
                                    @RequestParam BigDecimal price,
                                    @RequestParam("file") MultipartFile file,
+                                   @RequestParam(value = "coverFile", required = false) MultipartFile coverFile,
                                    RedirectAttributes redirectAttributes) {
         try {
-            Long deckId = marketService.createMarketDeck(deckName, description, category, price, file);
+            Long deckId = marketService.createMarketDeck(deckName, description, category, price, file, coverFile);
             redirectAttributes.addFlashAttribute("success", "VIP卡组创建成功！");
             return "redirect:/admin/market/edit/" + deckId;
         } catch (Exception e) {
@@ -209,9 +210,10 @@ public class AdminController {
                                    @RequestParam(required = false) String description,
                                    @RequestParam(required = false) String category,
                                    @RequestParam BigDecimal price,
+                                   @RequestParam(value = "coverFile", required = false) MultipartFile coverFile,
                                    RedirectAttributes redirectAttributes) {
         try {
-            marketService.updateMarketDeck(id, deckName, description, category, price);
+            marketService.updateMarketDeck(id, deckName, description, category, price, coverFile);
             redirectAttributes.addFlashAttribute("success", "更新成功！");
             return "redirect:/admin/market/edit/" + id;
         } catch (Exception e) {

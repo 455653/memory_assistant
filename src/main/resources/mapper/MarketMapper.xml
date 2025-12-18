@@ -68,11 +68,15 @@
     <!-- 更新卡组 -->
     <update id="update">
         UPDATE sys_market_deck
-        SET deck_name = #{deckName},
+        <set>
+            deck_name = #{deckName},
             description = #{description},
             category = #{category},
             price = #{price},
-            cover_url = #{coverUrl}
+            <if test="coverUrl != null">
+                cover_url = #{coverUrl},
+            </if>
+        </set>
         WHERE id = #{id}
     </update>
     

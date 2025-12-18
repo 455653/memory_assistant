@@ -129,6 +129,26 @@
                                 <textarea class="form-control" name="description" rows="3">${deck.description}</textarea>
                             </div>
                             
+                            <!-- 封面图片上传 -->
+                            <div class="mb-3">
+                                <label class="form-label">封面图片 (Cover Image)</label>
+                                <input type="file" class="form-control" name="coverFile" accept="image/*">
+                                <div class="form-text">支持 JPG、PNG、GIF 等图片格式，建议尺寸：400x300</div>
+                                
+                                <!-- 编辑模式：显示当前封面预览 -->
+                                <c:if test="${isEdit && not empty deck.coverUrl}">
+                                    <div class="mt-2">
+                                        <label class="form-label text-muted">当前封面:</label>
+                                        <div>
+                                            <img src="${pageContext.request.contextPath}${deck.coverUrl}" 
+                                                 alt="Cover Preview" 
+                                                 class="img-thumbnail" 
+                                                 style="max-width: 300px; max-height: 200px;">
+                                        </div>
+                                    </div>
+                                </c:if>
+                            </div>
+                            
                             <c:if test="${!isEdit}">
                                 <div class="mb-3">
                                     <label class="form-label">导入卡片文件 <span class="text-danger">*</span></label>
