@@ -49,9 +49,14 @@
 
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h3>📚 我的卡组</h3>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createDeckModal">
-                <i class="bi bi-plus-circle"></i> 创建新卡组
-            </button>
+            <div>
+                <a href="${pageContext.request.contextPath}/deck/ai/create" class="btn btn-success me-2">
+                    <i class="bi bi-magic"></i> AI智能制卡
+                </a>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createDeckModal">
+                    <i class="bi bi-plus-circle"></i> 手动创建卡组
+                </button>
+            </div>
         </div>
 
         <c:if test="${empty decks}">

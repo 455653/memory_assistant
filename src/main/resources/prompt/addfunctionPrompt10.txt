@@ -1,0 +1,245 @@
+# Role
+你是一名精通 Java Spring Boot 3.x, MyBatis, JSP 以及大模型应用开发的架构师。
+我正在开发 "Memory-X" 记忆卡片项目。
+我现在需要实现一个核心功能：**“基于 AI 的文档自动制卡” (AI Flashcard Generation)**。
+
+# Context (项目背景)
+1.  **现有技术栈**: Spring Boot + MyBatis + MySQL + JSP + Bootstrap 5。
+2.  **现有表结构**: `flashcard_deck` (卡组), `flashcard` (卡片)。
+3.  **API 服务**: 我将使用 **DeepSeek API** (`deepseek-chat` 模型)。虽然官方示例是 Node.js，但我需要你用 **Java** 实现调用。
+    -   Base URL: `https://api.deepseek.com`
+    -   DeepSeek API 兼容 OpenAI SDK 格式。
+
+
+# Requirements (需求详情)
+请帮我实现“用户上传 Word/PDF -> AI 分析生成问答对 -> 用户预览并勾选 -> 保存入库”的完整流程。
+
+## 1. 依赖管理 (pom.xml)
+请提供处理文件上传和解析文档所需的 Maven 依赖：
+-   **Apache PDFBox**: 用于解析 `.pdf` 文件。
+-   **Apache POI**: 用于解析 `.docx` Word 文件。
+-   **OkHttp3** 或 **Hutool-http**: 用于发送 HTTP 请求调用 DeepSeek API。
+-   **Jackson**: 用于解析 AI 返回的 JSON 数据。
+
+## 2. 后端 - 文档解析服务 (`DocumentParserService`)
+请创建一个服务类，包含以下功能：
+-   `String parsePdf(MultipartFile file)`: 提取 PDF 纯文本。
+-   `String parseDocx(MultipartFile file)`: 提取 Word 纯文本。
+-   **文本清洗与分片 (Critical)**:
+    -   由于 API Token 限制，文档可能太长。请实现一个 `cleanAndChunk(String text)` 方法。
+    -   **策略**: 将提取的文本按 **2000字符** 为单位进行切分，目前仅取**前 2 个切片**（或前 5000 字）发送给 AI，避免 Token 溢出（请在注释中说明这一点，方便我后续扩展）。
+
+## 3. 后端 - AI 交互服务 (`DeepSeekAIService`)
+请实现调用 DeepSeek API 的逻辑：
+-   **Prompt 设计 (核心)**:
+    -   System Prompt: "你是一个专业的助教。请根据用户提供的文本，提取关键知识点，生成 5-10 个 '问题' 和 '答案' 对。必须严格返回 JSON 格式，数组结构，无需 Markdown 标记。格式示例: `[{\"question\":\"...\", \"answer\":\"...\"}]`"
+-   **API 调用**:
+    -   使用 Java 代码构建 POST 请求。
+    -   Header: `Authorization: Bearer {your_api_key}`
+    -   Model: `deepseek-chat`
+    -   解析 API 返回的 JSON 字符串，映射为 `List<GeneratedCardDTO>`。
+
+## 4. 后端 - 控制器 (`AiDeckController`)
+你需要处理两个阶段的请求：
+-   **阶段一：上传与预览**
+    -   `POST /deck/ai/preview`: 接收 `file` 和 `deckName`(可选)。
+    -   调用解析服务 -> 调用 AI 服务。
+    -   将生成的 `List<GeneratedCardDTO>` 存入 `HttpSession` (避免重复调用 AI)，并跳转到 `ai_preview.jsp`。
+-   **阶段二：保存选择**
+    -   `POST /deck/ai/save`: 接收用户在前端勾选的卡片索引（或重新提交完整的卡片列表）以及最终的 `deckName`。
+    -   创建新的 `FlashcardDeck` (User ID 从 Session 获取)。
+    -   批量插入 `Flashcard` 到数据库。
+    -   清除 Session 中的临时数据，重定向到卡组列表。
+
+## 5. 前端 - 交互页面 (`ai_create.jsp` & `ai_preview.jsp`)
+-   **ai_create.jsp**: 简单的文件上传表单 (`multipart/form-data`)。
+-   **ai_preview.jsp**:
+    -   显示生成的卡片列表（左边问题，右边答案）。
+    -   每行前面有一个 **Checkbox**，默认全选。
+    -   底部输入框允许用户修改“卡组名称”。
+    -   “确认导入”按钮提交表单。
+
+# Technical Constraints (技术约束)
+1.  **API Key 配置**: 请将 API Key 放在 `application.properties` 中 (`deepseek.api.key=...`)，并在 Service 中通过 `@Value` 读取。
+2.  **JSON 处理**: AI 返回的内容可能包含 Markdown 代码块标记（如 ```json ... ```），请编写简单的正则或字符串处理逻辑去除这些标记，确保 `ObjectMapper` 能解析。
+3.  **异常处理**: 如果文件解析失败或 API 调用超时，请返回友好的错误提示。
+
+# Output Expected
+1.  `pom.xml` 依赖片段。
+2.  `DocumentParserService.java` 源码。
+3.  `DeepSeekAIService.java` 源码（重点是 Prompt 和 HTTP 请求）。
+4.  `AiDeckController.java` 源码。
+5.  `ai_preview.jsp` 的核心 HTML/JSTL 代码。
+
+ API调用：curl https://api.deepseek.com/chat/completions \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${DEEPSEEK_API_KEY}" \
+            -d '{
+                  "model": "deepseek-chat",
+                  "messages": [
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "user", "content": "Hello!"}
+                  ],
+                  "stream": false
+                }'
+ 我的API密钥为：sk-9f0f015dc8cf4714bcc02975947d0933
+我的数据库代码：
+create table sys_market_deck
+(
+    id          bigint auto_increment comment '商品卡组ID'
+        primary key,
+    deck_name   varchar(100)                             not null comment '卡组名称',
+    description text                                     null comment '卡组描述',
+    category    varchar(50)                              null comment '卡组分类',
+    price       decimal(10, 2) default 0.00              not null comment '价格（元）',
+    cover_url   varchar(255)                             null comment '封面图URL',
+    card_count  int            default 0                 null comment '卡片数量',
+    create_time datetime       default CURRENT_TIMESTAMP null comment '创建时间',
+    update_time datetime       default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
+    status      tinyint        default 1                 null comment '状态: 0-下架, 1-上架'
+)
+    comment 'VIP商店卡组表' charset = utf8mb4;
+
+create table sys_market_card
+(
+    id               bigint auto_increment comment '商品卡片ID'
+        primary key,
+    market_deck_id   bigint                             not null comment '所属商店卡组ID',
+    question         text                               not null comment '问题/正面',
+    answer           text                               not null comment '答案/背面',
+    difficulty_level int      default 1                 null comment '难度等级: 1-简单, 2-中等, 3-困难',
+    create_time      datetime default CURRENT_TIMESTAMP null comment '创建时间',
+    update_time      datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
+    status           tinyint  default 1                 null comment '状态: 0-禁用, 1-启用',
+    constraint fk_market_card_deck
+        foreign key (market_deck_id) references sys_market_deck (id)
+            on delete cascade
+)
+    comment 'VIP商店卡片表' charset = utf8mb4;
+
+create index idx_market_deck_id
+    on sys_market_card (market_deck_id);
+
+create table sys_user
+(
+    id          bigint auto_increment comment '用户ID'
+        primary key,
+    username    varchar(50)                        not null comment '用户名',
+    password    varchar(100)                       not null comment '密码',
+    email       varchar(100)                       null comment '邮箱',
+    nickname    varchar(50)                        null comment '昵称',
+    avatar_url  varchar(255)                       null comment '头像URL',
+    create_time datetime default CURRENT_TIMESTAMP null comment '创建时间',
+    update_time datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
+    status      tinyint  default 1                 null comment '状态: 0-禁用, 1-启用',
+    constraint username
+        unique (username)
+)
+    comment '用户表' charset = utf8mb4;
+
+create table flashcard_deck
+(
+    id               bigint auto_increment comment '卡组ID'
+        primary key,
+    user_id          bigint                             not null comment '所属用户ID',
+    deck_name        varchar(100)                       not null comment '卡组名称',
+    description      text                               null comment '卡组描述',
+    category         varchar(50)                        null comment '卡组分类',
+    card_count       int      default 0                 null comment '卡片数量',
+    create_time      datetime default CURRENT_TIMESTAMP null comment '创建时间',
+    update_time      datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
+    status           tinyint  default 1                 null comment '状态: 0-删除, 1-正常',
+    source_market_id bigint                             null comment '购买源ID: NULL-用户自建, 其他-从商店购买的对应sys_market_deck.id',
+    constraint flashcard_deck_ibfk_1
+        foreign key (user_id) references sys_user (id)
+            on delete cascade
+)
+    comment '卡组表' charset = utf8mb4;
+
+create table flashcard
+(
+    id               bigint auto_increment comment '卡片ID'
+        primary key,
+    deck_id          bigint                                  not null comment '所属卡组ID',
+    question         text                                    not null comment '问题/正面',
+    answer           text                                    not null comment '答案/背面',
+    next_review_date date                                    not null comment '下次复习日期',
+    stage            int           default 0                 null comment '记忆阶段: 0-新卡片, 1-第1次复习, 2-第2次复习... 7-已完成',
+    review_count     int           default 0                 null comment '复习次数',
+    correct_count    int           default 0                 null comment '正确次数',
+    wrong_count      int           default 0                 null comment '错误次数',
+    difficulty       decimal(3, 2) default 1.00              null comment '难度系数: 0.50-2.00',
+    create_time      datetime      default CURRENT_TIMESTAMP null comment '创建时间',
+    update_time      datetime      default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
+    status           tinyint       default 1                 null comment '状态: 0-归档, 1-学习中, 2-已掌握',
+    constraint flashcard_ibfk_1
+        foreign key (deck_id) references flashcard_deck (id)
+            on delete cascade
+)
+    comment '闪卡表' charset = utf8mb4;
+
+create index idx_deck_status
+    on flashcard (deck_id, status);
+
+create index idx_next_review
+    on flashcard (next_review_date, status);
+
+create index idx_user_market
+    on flashcard_deck (user_id, source_market_id);
+
+create table review_log
+(
+    id                   bigint auto_increment comment '记录ID'
+        primary key,
+    card_id              bigint                             not null comment '卡片ID',
+    user_id              bigint                             not null comment '用户ID',
+    review_date          datetime default CURRENT_TIMESTAMP null comment '复习时间',
+    is_correct           tinyint                            not null comment '是否记得: 0-忘了, 1-记得',
+    old_stage            int                                null comment '复习前阶段',
+    new_stage            int                                null comment '复习后阶段',
+    old_next_review_date date                               null comment '复习前下次复习日期',
+    new_next_review_date date                               null comment '复习后下次复习日期',
+    response_time        int                                null comment '响应时间(秒)',
+    constraint review_log_ibfk_1
+        foreign key (card_id) references flashcard (id)
+            on delete cascade,
+    constraint review_log_ibfk_2
+        foreign key (user_id) references sys_user (id)
+            on delete cascade
+)
+    comment '复习记录表' charset = utf8mb4;
+
+create index idx_card_date
+    on review_log (card_id, review_date);
+
+create index user_id
+    on review_log (user_id);
+
+create table sys_market_comment
+(
+    id             bigint auto_increment comment '评论ID'
+        primary key,
+    market_deck_id bigint                             not null comment '所属商店卡组ID',
+    user_id        bigint                             not null comment '评论用户ID',
+    content        text                               not null comment '评论内容',
+    rating         tinyint  default 5                 null comment '评分: 1-5星',
+    create_time    datetime default CURRENT_TIMESTAMP null comment '创建时间',
+    constraint fk_comment_market_deck
+        foreign key (market_deck_id) references sys_market_deck (id)
+            on delete cascade,
+    constraint fk_comment_user
+        foreign key (user_id) references sys_user (id)
+            on delete cascade
+)
+    comment 'VIP商店评论表' charset = utf8mb4;
+
+create index idx_create_time
+    on sys_market_comment (create_time desc);
+
+create index idx_market_deck_id
+    on sys_market_comment (market_deck_id);
+
+create index idx_user_id
+    on sys_market_comment (user_id);
+
+
