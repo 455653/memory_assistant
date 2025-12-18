@@ -67,6 +67,11 @@
                             <i class="bi bi-cash-stack"></i> 销售记录
                         </a>
                     </li>
+                    <li class="nav-item mt-4">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/logout">
+                            <i class="bi bi-box-arrow-right"></i> 退出登录
+                        </a>
+                    </li>
                 </ul>
             </div>
 
