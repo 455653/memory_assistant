@@ -130,10 +130,16 @@
                             </div>
                             
                             <!-- 购买按钮 -->
-                            <button class="btn btn-primary buy-btn w-100" 
+                            <button class="btn btn-primary buy-btn w-100 mb-2" 
                                     onclick="confirmBuy(${deck.id}, '${deck.deckName}', ${deck.price})">
                                 <i class="bi bi-cart-plus"></i> 立即购买
                             </button>
+                            
+                            <!-- 查看详情按钮 -->
+                            <a href="${pageContext.request.contextPath}/market/deck/${deck.id}" 
+                               class="btn btn-outline-secondary w-100">
+                                <i class="bi bi-eye"></i> 查看详情与评价
+                            </a>
                         </div>
                     </div>
                 </div>

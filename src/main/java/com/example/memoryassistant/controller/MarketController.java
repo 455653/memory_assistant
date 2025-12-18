@@ -1,5 +1,6 @@
 package com.example.memoryassistant.controller;
 
+import com.example.memoryassistant.dto.MarketCommentDTO;
 import com.example.memoryassistant.entity.MarketDeck;
 import com.example.memoryassistant.service.MarketService;
 import jakarta.servlet.http.HttpSession;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
@@ -39,8 +41,41 @@ public class MarketController {
         // 获取所有上架的VIP卡组
         List<MarketDeck> marketDecks = marketService.getAllMarketDecks();
         model.addAttribute("marketDecks", marketDecks);
+        model.addAttribute("currentUserId", userId);
 
         return "market";
+    }
+
+    /**
+     * VIP卡组详情页面（含评论）
+     */
+    @GetMapping("/deck/{marketDeckId}")
+    public String deckDetail(@PathVariable Long marketDeckId,
+                            HttpSession session,
+                            Model model) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        // 获取卡组详情
+        MarketDeck deck = marketService.getMarketDeckById(marketDeckId);
+        if (deck == null) {
+            return "redirect:/market";
+        }
+
+        // 获取评论列表
+        List<MarketCommentDTO> comments = marketService.getComments(marketDeckId);
+        
+        // 检查用户是否已购买
+        boolean hasPurchased = marketService.hasPurchased(userId, marketDeckId);
+
+        model.addAttribute("deck", deck);
+        model.addAttribute("comments", comments);
+        model.addAttribute("hasPurchased", hasPurchased);
+        model.addAttribute("currentUserId", userId);
+
+        return "market-detail";
     }
 
     /**
@@ -72,6 +107,36 @@ public class MarketController {
             // 其他错误
             redirectAttributes.addFlashAttribute("error", "购买失败，请稍后重试");
             return "redirect:/market";
+        }
+    }
+
+    /**
+     * 提交评论
+     */
+    @PostMapping("/comment")
+    public String addComment(@RequestParam Long marketDeckId,
+                            @RequestParam String content,
+                            @RequestParam(required = false, defaultValue = "5") Integer rating,
+                            HttpSession session,
+                            RedirectAttributes redirectAttributes) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        try {
+            // 添加评论（内部会校验购买权限）
+            marketService.addComment(userId, marketDeckId, content, rating);
+            
+            redirectAttributes.addFlashAttribute("success", "评论发布成功！");
+            return "redirect:/market/deck/" + marketDeckId;
+        } catch (IllegalArgumentException e) {
+            // 权限不足或参数错误
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/market/deck/" + marketDeckId;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "评论发布失败，请稍后重试");
+            return "redirect:/market/deck/" + marketDeckId;
         }
     }
 }

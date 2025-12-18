@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.memoryassistant.mapper.MarketCommentMapper">
+
+    <!-- MarketComment 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.example.memoryassistant.entity.MarketComment">
+        <id property="id" column="id"/>
+        <result property="marketDeckId" column="market_deck_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="content" column="content"/>
+        <result property="rating" column="rating"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <!-- MarketCommentDTO 结果映射（包含用户信息） -->
+    <resultMap id="DTOResultMap" type="com.example.memoryassistant.dto.MarketCommentDTO">
+        <id property="id" column="id"/>
+        <result property="marketDeckId" column="market_deck_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="username" column="username"/>
+        <result property="nickname" column="nickname"/>
+        <result property="avatarUrl" column="avatar_url"/>
+        <result property="content" column="content"/>
+        <result property="rating" column="rating"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+
+    <!-- 插入评论 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_market_comment (market_deck_id, user_id, content, rating)
+        VALUES (#{marketDeckId}, #{userId}, #{content}, #{rating})
+    </insert>
+
+    <!-- 查询某商店卡组的所有评论（关联用户信息） -->
+    <select id="selectByMarketDeckId" resultMap="DTOResultMap">
+        SELECT 
+            c.id,
+            c.market_deck_id,
+            c.user_id,
+            c.content,
+            c.rating,
+            c.create_time,
+            u.username,
+            u.nickname,
+            u.avatar_url
+        FROM sys_market_comment c
+        INNER JOIN sys_user u ON c.user_id = u.id
+        WHERE c.market_deck_id = #{marketDeckId}
+        ORDER BY c.create_time DESC
+    </select>
+
+</mapper>

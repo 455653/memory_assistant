@@ -1,11 +1,14 @@
 package com.example.memoryassistant.service;
 
+import com.example.memoryassistant.dto.MarketCommentDTO;
 import com.example.memoryassistant.entity.Flashcard;
 import com.example.memoryassistant.entity.FlashcardDeck;
 import com.example.memoryassistant.entity.MarketCard;
+import com.example.memoryassistant.entity.MarketComment;
 import com.example.memoryassistant.entity.MarketDeck;
 import com.example.memoryassistant.mapper.FlashcardDeckMapper;
 import com.example.memoryassistant.mapper.FlashcardMapper;
+import com.example.memoryassistant.mapper.MarketCommentMapper;
 import com.example.memoryassistant.mapper.MarketMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,13 +27,16 @@ public class MarketService {
     private final MarketMapper marketMapper;
     private final FlashcardDeckMapper deckMapper;
     private final FlashcardMapper flashcardMapper;
+    private final MarketCommentMapper commentMapper;
 
     public MarketService(MarketMapper marketMapper, 
                         FlashcardDeckMapper deckMapper, 
-                        FlashcardMapper flashcardMapper) {
+                        FlashcardMapper flashcardMapper,
+                        MarketCommentMapper commentMapper) {
         this.marketMapper = marketMapper;
         this.deckMapper = deckMapper;
         this.flashcardMapper = flashcardMapper;
+        this.commentMapper = commentMapper;
     }
 
     /**
@@ -120,5 +126,59 @@ public class MarketService {
         }
 
         return newDeckId;
+    }
+
+    /**
+     * 添加评论（仅购买用户可评论）
+     * 
+     * @param userId 用户ID
+     * @param marketDeckId 商店卡组ID
+     * @param content 评论内容
+     * @param rating 评分（1-5星）
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void addComment(Long userId, Long marketDeckId, String content, Integer rating) {
+        // 核心权限校验：检查用户是否购买过该卡组
+        int purchaseCount = deckMapper.countByUserIdAndMarketId(userId, marketDeckId);
+        if (purchaseCount == 0) {
+            throw new IllegalArgumentException("您需要购买后才能评价");
+        }
+        
+        // 验证评分范围
+        if (rating == null || rating < 1 || rating > 5) {
+            rating = 5; // 默认5星
+        }
+        
+        // 创建评论对象
+        MarketComment comment = new MarketComment();
+        comment.setMarketDeckId(marketDeckId);
+        comment.setUserId(userId);
+        comment.setContent(content);
+        comment.setRating(rating);
+        
+        // 插入评论
+        commentMapper.insert(comment);
+    }
+
+    /**
+     * 获取某卡组的所有评论
+     * 
+     * @param marketDeckId 商店卡组ID
+     * @return 评论DTO列表
+     */
+    public List<MarketCommentDTO> getComments(Long marketDeckId) {
+        return commentMapper.selectByMarketDeckId(marketDeckId);
+    }
+
+    /**
+     * 检查用户是否已购买某卡组
+     * 
+     * @param userId 用户ID
+     * @param marketDeckId 商店卡组ID
+     * @return true-已购买, false-未购买
+     */
+    public boolean hasPurchased(Long userId, Long marketDeckId) {
+        int count = deckMapper.countByUserIdAndMarketId(userId, marketDeckId);
+        return count > 0;
     }
 }
