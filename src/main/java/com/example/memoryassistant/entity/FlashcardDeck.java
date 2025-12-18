@@ -52,4 +52,9 @@ public class FlashcardDeck {
      * 状态: 0-删除, 1-正常
      */
     private Integer status;
+    
+    /**
+     * 购买源ID: NULL-用户自建, 其他-从商店购买的对应sys_market_deck.id
+     */
+    private Long sourceMarketId;
 }

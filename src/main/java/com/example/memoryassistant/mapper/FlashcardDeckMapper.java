@@ -1,6 +1,8 @@
 package com.example.memoryassistant.mapper;
 
 import com.example.memoryassistant.entity.FlashcardDeck;
+import org.apache.ibatis.annotations.Param;
+
 import java.util.List;
 
 /**
@@ -37,4 +39,12 @@ public interface FlashcardDeckMapper {
      * 更新卡组的卡片数量
      */
     int updateCardCount(Long deckId);
+    
+    /**
+     * 统计用户是否已购买指定商店卡组
+     * @param userId 用户ID
+     * @param marketId 商店卡组ID
+     * @return 购买次数（0表示未购买，>0表示已购买）
+     */
+    int countByUserIdAndMarketId(@Param("userId") Long userId, @Param("marketId") Long marketId);
 }

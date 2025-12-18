@@ -65,7 +65,7 @@ public class MarketController {
             
             return "redirect:/decks";
         } catch (IllegalArgumentException e) {
-            // 卡组不存在或已下架
+            // 卡组不存在或已下架，或已购买
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/market";
         } catch (Exception e) {

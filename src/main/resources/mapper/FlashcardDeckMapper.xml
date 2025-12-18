@@ -13,6 +13,7 @@
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
         <result property="status" column="status"/>
+        <result property="sourceMarketId" column="source_market_id"/>
     </resultMap>
 
     <select id="selectById" resultMap="BaseResultMap">
@@ -26,8 +27,8 @@
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO flashcard_deck (user_id, deck_name, description, category, card_count, status)
-        VALUES (#{userId}, #{deckName}, #{description}, #{category}, #{cardCount}, #{status})
+        INSERT INTO flashcard_deck (user_id, deck_name, description, category, card_count, status, source_market_id)
+        VALUES (#{userId}, #{deckName}, #{description}, #{category}, #{cardCount}, #{status}, #{sourceMarketId})
     </insert>
 
     <update id="update">
@@ -51,5 +52,13 @@
         )
         WHERE id = #{deckId}
     </update>
+
+    <select id="countByUserIdAndMarketId" resultType="int">
+        SELECT COUNT(*)
+        FROM flashcard_deck
+        WHERE user_id = #{userId}
+          AND source_market_id = #{marketId}
+          AND status = 1
+    </select>
 
 </mapper>

@@ -56,6 +56,12 @@ public class MarketService {
      */
     @Transactional(rollbackFor = Exception.class)
     public Long buyDeck(Long userId, Long marketDeckId) {
+        // 前置检查：用户是否已购买过该卡组
+        int count = deckMapper.countByUserIdAndMarketId(userId, marketDeckId);
+        if (count > 0) {
+            throw new IllegalArgumentException("您已拥有该卡组，无需重复购买");
+        }
+        
         // 1. 查询商品卡组信息
         MarketDeck marketDeck = marketMapper.selectMarketDeckById(marketDeckId);
         if (marketDeck == null) {
@@ -70,6 +76,7 @@ public class MarketService {
         userDeck.setCategory(marketDeck.getCategory());
         userDeck.setCardCount(0); // 初始为0，后续批量插入后会更新
         userDeck.setStatus(1); // 正常状态
+        userDeck.setSourceMarketId(marketDeckId); // 设置购买源ID
         
         // 插入卡组，获取生成的卡组ID
         deckMapper.insert(userDeck);
