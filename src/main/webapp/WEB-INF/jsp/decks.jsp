@@ -32,7 +32,18 @@
             <span class="navbar-brand mb-0 h1">🧠 Memory Assistant</span>
             <div class="d-flex">
                 <a href="${pageContext.request.contextPath}/dashboard" class="btn btn-outline-light btn-sm me-2">返回首页</a>
-                <a href="${pageContext.request.contextPath}/market" class="btn btn-outline-light btn-sm me-2">VIP商店</a>
+                <c:choose>
+                    <c:when test="${sessionScope.loginUser.role == 'ADMIN'}">
+                        <!-- 管理员菜单 -->
+                        <a href="${pageContext.request.contextPath}/admin/dashboard" class="btn btn-outline-light btn-sm me-2">管理后台</a>
+                        <a href="${pageContext.request.contextPath}/admin/market" class="btn btn-outline-light btn-sm me-2">VIP卡组管理</a>
+                        <a href="${pageContext.request.contextPath}/admin/feedback" class="btn btn-outline-light btn-sm me-2">反馈管理</a>
+                    </c:when>
+                    <c:otherwise>
+                        <!-- 普通用户菜单 -->
+                        <a href="${pageContext.request.contextPath}/market" class="btn btn-outline-light btn-sm me-2">VIP商店</a>
+                    </c:otherwise>
+                </c:choose>
                 <a href="${pageContext.request.contextPath}/logout" class="btn btn-outline-light btn-sm">退出</a>
             </div>
         </div>

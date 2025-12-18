@@ -47,4 +47,9 @@ public interface FlashcardDeckMapper {
      * @return 购买次数（0表示未购买，>0表示已购买）
      */
     int countByUserIdAndMarketId(@Param("userId") Long userId, @Param("marketId") Long marketId);
+    
+    /**
+     * 统计所有购买的卡组数量（销量）
+     */
+    int countPurchasedDecks();
 }

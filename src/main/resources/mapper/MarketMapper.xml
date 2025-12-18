@@ -48,5 +48,15 @@
         WHERE market_deck_id = #{marketDeckId} AND status = 1
         ORDER BY id ASC
     </select>
+    
+    <!-- 统计VIP卡组总数 -->
+    <select id="countAllMarketDecks" resultType="int">
+        SELECT COUNT(*) FROM sys_market_deck
+    </select>
+    
+    <!-- 更新卡组状态 -->
+    <update id="updateStatus">
+        UPDATE sys_market_deck SET status = #{status} WHERE id = #{id}
+    </update>
 
 </mapper>

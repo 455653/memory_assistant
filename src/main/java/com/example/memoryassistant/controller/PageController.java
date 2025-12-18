@@ -72,10 +72,18 @@ public class PageController {
                        Model model) {
         SysUser user = userService.login(username, password);
         if (user != null) {
+            // 将完整用户对象存入session
+            session.setAttribute("loginUser", user);
             session.setAttribute("userId", user.getId());
             session.setAttribute("username", user.getUsername());
             session.setAttribute("nickname", user.getNickname());
-            return "redirect:/dashboard";
+            
+            // 根据角色跳转到不同页面
+            if ("ADMIN".equals(user.getRole())) {
+                return "redirect:/admin/dashboard";
+            } else {
+                return "redirect:/dashboard";
+            }
         } else {
             model.addAttribute("error", "用户名或密码错误");
             return "login";
@@ -98,6 +106,7 @@ public class PageController {
             SysUser user = userService.register(username, password, email, nickname);
             
             // 注册成功，自动登录
+            session.setAttribute("loginUser", user);
             session.setAttribute("userId", user.getId());
             session.setAttribute("username", user.getUsername());
             session.setAttribute("nickname", user.getNickname());

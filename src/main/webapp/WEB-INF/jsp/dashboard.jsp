@@ -217,12 +217,29 @@
                 <i class="bi bi-brain"></i> Memory Assistant
             </a>
             <div class="d-flex align-items-center">
-                <a href="${pageContext.request.contextPath}/market" class="btn btn-outline-light btn-modern me-2">
-                    <i class="bi bi-cart me-1"></i>VIP商店
-                </a>
-                <a href="${pageContext.request.contextPath}/decks" class="btn btn-light btn-modern me-2">
-                    <i class="bi bi-folder me-1"></i>卡组管理
-                </a>
+                <c:choose>
+                    <c:when test="${sessionScope.loginUser.role == 'ADMIN'}">
+                        <!-- 管理员菜单 -->
+                        <a href="${pageContext.request.contextPath}/admin/dashboard" class="btn btn-outline-light btn-modern me-2">
+                            <i class="bi bi-speedometer2 me-1"></i>管理后台
+                        </a>
+                        <a href="${pageContext.request.contextPath}/admin/market" class="btn btn-outline-light btn-modern me-2">
+                            <i class="bi bi-shop me-1"></i>VIP卡组管理
+                        </a>
+                        <a href="${pageContext.request.contextPath}/admin/feedback" class="btn btn-outline-light btn-modern me-2">
+                            <i class="bi bi-chat-square-text me-1"></i>反馈管理
+                        </a>
+                    </c:when>
+                    <c:otherwise>
+                        <!-- 普通用户菜单 -->
+                        <a href="${pageContext.request.contextPath}/market" class="btn btn-outline-light btn-modern me-2">
+                            <i class="bi bi-cart me-1"></i>VIP商店
+                        </a>
+                        <a href="${pageContext.request.contextPath}/decks" class="btn btn-light btn-modern me-2">
+                            <i class="bi bi-folder me-1"></i>卡组管理
+                        </a>
+                    </c:otherwise>
+                </c:choose>
                 <a href="${pageContext.request.contextPath}/logout" class="btn btn-outline-light btn-modern">
                     <i class="bi bi-box-arrow-right me-1"></i>退出
                 </a>

@@ -60,5 +60,11 @@
           AND source_market_id = #{marketId}
           AND status = 1
     </select>
+    
+    <select id="countPurchasedDecks" resultType="int">
+        SELECT COUNT(*)
+        FROM flashcard_deck
+        WHERE source_market_id IS NOT NULL AND status = 1
+    </select>
 
 </mapper>

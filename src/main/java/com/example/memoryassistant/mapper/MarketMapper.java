@@ -29,4 +29,14 @@ public interface MarketMapper {
      * @return 卡片列表
      */
     List<MarketCard> selectCardsByMarketDeckId(@Param("marketDeckId") Long marketDeckId);
+    
+    /**
+     * 统计VIP卡组总数
+     */
+    int countAllMarketDecks();
+    
+    /**
+     * 更新卡组状态
+     */
+    int updateStatus(@Param("id") Long id, @Param("status") Integer status);
 }

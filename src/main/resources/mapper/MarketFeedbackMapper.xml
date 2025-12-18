@@ -19,5 +19,34 @@
         INSERT INTO sys_market_feedback (market_deck_id, user_id, content, contact_info, status)
         VALUES (#{marketDeckId}, #{userId}, #{content}, #{contactInfo}, #{status})
     </insert>
+    
+    <!-- 统计指定状态的反馈数量 -->
+    <select id="countByStatus" resultType="int">
+        SELECT COUNT(*) FROM sys_market_feedback WHERE status = #{status}
+    </select>
+    
+    <!-- 查询所有反馈（关联用户和卡组信息） -->
+    <select id="selectAllWithDetail" resultType="com.example.memoryassistant.dto.FeedbackDetailDTO">
+        SELECT 
+            f.id,
+            f.market_deck_id AS marketDeckId,
+            f.user_id AS userId,
+            f.content,
+            f.contact_info AS contactInfo,
+            f.status,
+            f.create_time AS createTime,
+            u.username,
+            u.nickname AS userNickname,
+            d.deck_name AS deckName
+        FROM sys_market_feedback f
+        INNER JOIN sys_user u ON f.user_id = u.id
+        INNER JOIN sys_market_deck d ON f.market_deck_id = d.id
+        ORDER BY f.create_time DESC
+    </select>
+    
+    <!-- 更新反馈状态 -->
+    <update id="updateStatus">
+        UPDATE sys_market_feedback SET status = #{status} WHERE id = #{id}
+    </update>
 
 </mapper>

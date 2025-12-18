@@ -26,4 +26,9 @@ public interface SysUserMapper {
      * 更新用户
      */
     int update(SysUser user);
+    
+    /**
+     * 统计用户总数
+     */
+    int countAll();
 }
